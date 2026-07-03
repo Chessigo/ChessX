@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChessX | ADMIN Form_01 - IPREG</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0b1f5c;
+    --blue:#1565d8;
+    --skyblue:#22a6ff;
+    --lightbg:#f4f7fb;
+    --card:#ffffff;
+    --text:#1a1a2e;
+    --muted:#6b7280;
+    --border:#dbe3f0;
+    --danger:#e53935;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Poppins',sans-serif;
+    color:var(--text);
+    padding:18px 0 60px;
+    min-height:100vh;
+    background:#ffffff;
+    position:relative;
+  }
+  .wrap{max-width:540px;margin:0 auto;padding:0 16px;position:relative;z-index:2;}
+  .card{
+    background:#ffffff;
+    border-radius:14px;
+    box-shadow:0 2px 10px rgba(0,0,0,0.06);
+    padding:28px 22px 32px;
+    border:1px solid #e7e9ee;
+    position:relative;
+  }
+  @keyframes logoBreathe{
+    0%,100%{transform:scale(1);}
+    50%{transform:scale(1.02);}
+  }
+  .logo-box{text-align:center;margin-bottom:4px;position:relative;z-index:1;}
+  .logo-box img{
+    width:320px;
+    max-width:88%;
+    image-rendering:-webkit-optimize-contrast;
+    animation:logoBreathe 4s ease-in-out infinite;
+  }
+  .form-tag{
+    text-align:center;
+    font-weight:700;
+    font-size:15px;
+    letter-spacing:2px;
+    color:var(--blue);
+    margin-top:4px;
+  }
+  .form-title{
+    text-align:center;
+    font-weight:800;
+    font-size:20px;
+    margin-top:2px;
+    color:var(--navy);
+    letter-spacing:0.5px;
+  }
+  .divider{
+    height:2px;
+    border-radius:2px;
+    background:#e7e9ee;
+    margin:16px 0 10px;
+  }
+  .next-id-msg{
+    text-align:center;
+    font-size:12.5px;
+    font-weight:600;
+    color:#1a8a3a;
+    margin-bottom:18px;
+    min-height:16px;
+    display:none; /* Shown only when needed */
+  }
+  .section-label{
+    font-weight:700;
+    font-size:14px;
+    color:var(--navy);
+    margin:22px 0 10px;
+    border-left:4px solid var(--navy);
+    padding-left:8px;
+  }
+  label.field-label{
+    display:block;
+    font-size:13.5px;
+    font-weight:600;
+    color:var(--text);
+    margin:14px 0 6px;
+  }
+  label.field-label .req{color:var(--danger);margin-left:3px;}
+  label.field-label .opt{color:var(--muted);font-weight:500;font-size:11.5px;margin-left:4px;}
+  input[type=text], input[type=email], input[type=password], input[type=tel], input[type=number], select, textarea{
+    width:100%;
+    padding:11px 12px;
+    border:1.5px solid var(--border);
+    border-radius:10px;
+    font-size:14px;
+    font-family:'Poppins',sans-serif;
+    background:#fbfcfe;
+    color:var(--text);
+    outline:none;
+    transition:border 0.15s;
+  }
+  input:focus, select:focus, textarea:focus{border-color:var(--skyblue);background:#fff;}
+  .toggle-yesno{
+    display:flex;gap:10px;margin-top:6px;
+  }
+  .toggle-yesno label{
+    flex:1;
+    display:flex;align-items:center;justify-content:center;gap:7px;
+    border:1.5px solid var(--border);
+    padding:12px 10px;
+    border-radius:12px;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    background:#fbfcfe;
+    color:var(--text);
+  }
+  .toggle-yesno input{accent-color:var(--blue);width:17px;height:17px;}
+  .toggle-yesno label.active{
+    border-color:var(--blue);
+    background:#eaf2ff;
+    color:var(--navy);
+  }
+  .phone-row{display:flex;gap:8px;}
+  .phone-row .code{
+    width:62px;
+    text-align:center;
+    background:#eef3fb;
+    font-weight:600;
+    color:var(--navy);
+    border:1.5px solid var(--border);
+    border-radius:10px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;
+  }
+  .same-row{
+    display:flex;align-items:center;gap:7px;
+    margin-top:8px;font-size:13px;color:var(--muted);
+  }
+  .same-row input{width:16px;height:16px;accent-color:var(--blue);}
+  .dropdown-wrap{position:relative;}
+  .dropdown-list{
+    position:absolute;
+    top:calc(100% + 4px);
+    left:0;right:0;
+    max-height:200px;
+    overflow-y:auto;
+    background:#fff;
+    border:1.5px solid var(--border);
+    border-radius:10px;
+    z-index:50;
+    box-shadow:0 8px 20px rgba(0,0,0,0.1);
+    display:none;
+  }
+  .dropdown-list div{
+    padding:9px 12px;
+    font-size:13.5px;
+    cursor:pointer;
+  }
+  .dropdown-list div:hover{background:#eef3fb;}
+  .dropdown-list div.disabled-opt{color:#b4b9c4;cursor:not-allowed;}
+  .pin-row{display:flex;gap:12px;}
+  .pin-row > div{flex:1;}
+  #registerBtn, #loginBtn{
+    width:100%;
+    margin-top:26px;
+    padding:14px;
+    border:none;
+    border-radius:12px;
+    font-size:15.5px;
+    font-weight:700;
+    letter-spacing:0.5px;
+    color:#fff;
+    background:linear-gradient(90deg,var(--navy),var(--skyblue));
+    cursor:pointer;
+  }
+  #registerBtn:active, #loginBtn:active{transform:scale(0.99);}
+  .err-msg{
+    color:var(--danger);
+    font-size:12.5px;
+    margin-top:5px;
+    display:none;
+  }
+  .hint{font-size:11.5px;color:var(--muted);margin-top:4px;}
+  
+  /* Modal */
+  .modal-overlay{
+    position:fixed;inset:0;
+    background:rgba(11,31,92,0.55);
+    display:none;
+    align-items:center;justify-content:center;
+    z-index:999;
+    padding:18px;
+  }
+  .modal-box{
+    background:#fff;
+    border-radius:16px;
+    max-width:430px;
+    width:100%;
+    padding:26px 22px;
+    text-align:center;
+    box-shadow:0 20px 50px rgba(0,0,0,0.25);
+  }
+  .modal-box h2{
+    font-size:17px;color:var(--navy);margin:8px 0 14px;
+  }
+  .modal-detail{
+    text-align:left;
+    background:#f4f7fb;
+    border-radius:10px;
+    padding:14px;
+    font-size:13.5px;
+    margin:14px 0;
+    line-height:1.7;
+  }
+  .modal-detail b{color:var(--navy);}
+  .copy-btn{
+    background:linear-gradient(90deg,var(--navy),var(--blue));
+    color:#fff;border:none;border-radius:8px;
+    padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;
+    margin-top:6px;
+  }
+  .note-warn{
+    font-size:12.5px;color:var(--danger);font-weight:600;margin-top:14px;
+  }
+  .note-info{font-size:13px;color:var(--text);margin-top:10px;line-height:1.6;}
+  .register-another{
+    margin-top:18px;
+    background:#eef3fb;color:var(--navy);
+    border:1.5px solid var(--border);
+    border-radius:10px;padding:10px 16px;
+    font-weight:600;font-size:13.5px;cursor:pointer;width:100%;
+  }
+  .spinner-overlay{
+    position:fixed;inset:0;background:rgba(11,31,92,0.55);
+    display:none;align-items:center;justify-content:center;z-index:1000;
+    flex-direction:column;
+    backdrop-filter:blur(3px);
+  }
+  .loader-stage{
+    position:relative;
+    width:140px;height:140px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .loader-ring{
+    position:absolute;inset:0;
+    border-radius:50%;
+    border:4px solid transparent;
+    border-top-color:#22a6ff;
+    border-right-color:#6f3ad1;
+    animation:ringSpin 1.1s linear infinite;
+  }
+  .loader-ring.delay{
+    inset:14px;
+    border-top-color:rgba(255,255,255,0.7);
+    border-right-color:transparent;
+    border-left-color:#22a6ff;
+    animation:ringSpin 1.6s linear infinite reverse;
+    opacity:0.7;
+  }
+  .loader-logo{
+    width:78px;
+    position:relative;
+    z-index:2;
+    animation:logoPulse 1s ease-in-out infinite;
+    filter:drop-shadow(0 0 12px rgba(255,255,255,0.5));
+  }
+  @keyframes ringSpin{to{transform:rotate(360deg);}}
+  @keyframes logoPulse{
+    0%,100%{transform:scale(0.92);opacity:0.85;}
+    50%{transform:scale(1.05);opacity:1;}
+  }
+  .loader-text{
+    margin-top:18px;
+    color:#fff;
+    font-weight:600;
+    font-size:13.5px;
+    letter-spacing:1px;
+    text-align:center;
+  }
+  .loader-text span{
+    display:inline-block;
+    animation:dotBounce 1.2s infinite;
+  }
+  .loader-text span:nth-child(2){animation-delay:0.15s;}
+  .loader-text span:nth-child(3){animation-delay:0.3s;}
+  @keyframes dotBounce{
+    0%,100%{transform:translateY(0);opacity:0.5;}
+    50%{transform:translateY(-4px);opacity:1;}
+  }
+  #adminWelcome{
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    font-weight:700;
+    font-size:18px;
+    color:var(--blue);
+    margin:15px 0;
+  }
+  #adminWelcome img{
+    width:320px;
+    max-width:88%;
+    animation:logoBreathe 4s ease-in-out infinite;
+  }
+  #adminLoginForm{
+    display:block;
+  }
+  #registrationForm{
+    display:none;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="card">
+    <div class="logo-box" id="mainLogoBox">
+      <img id="mainLogoImg" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABu4AAAN3CAIAAABSuDsgAABxn2NhQlgAAHGfanVtYgAAAB5qdW1kYzJwYQARABCAAACqADibcQNjMnBhAAAAcXlqdW1iAAAAR2p1bWRjMm1hABEAEIAAAKoAOJtxA3VybjpjMnBhOjEzMDI2NGUyLTk4MzUtNDAyMS04ODU1LTRmMDUyZjU0NzRhOQAAACFVanVtYgAAAClqdW1kYzJhcwARABCAAACqADibcQNjMnBhLmFzc2VydGlvbnMAAAAJ0Wp1bWIAAAA7anVtZEDLDDK7ikidpwsq1vR/Q2kTYzJwYS5pY29uAAAAABhjMnNo9KWITnEozsZE7Af/JLXQNgAAABdiZmRiAGltYWdlL3N2Zyt4bWwAAAAJd2JpZGI8c3ZnIHdpZHRoPSI3MTYiIGhlaWdodD0iNzE2IiB2aWV3Qm94PSIwIDAgNzE2IDcxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTUwOC43NDkgMzE3LjM5OUM1MTYuNzc3IDI4Ny4zMTQgNTA4Ljk5MSAyNTMuODg0IDQ4NS4zODkgMjMwLjI4MkM0NjEuNzg4IDIwNi42ODEgNDI4LjM2IDI5OC44OTUgMzk4LjI3MyAyMDYuOTIzQzM3Ni4yMzEgMTg0LjkyOCAzNDMuMzkgMTc0Ljk1NiAzMTEuMTQ4IDE4My41OTZDMjc4LjkwNiAxOTIuMjM0IDI1NS40NSAyMTcuMjkyIDI0Ny4zNiAyNDcuMzYxQzIxNy4yOTEgMjU1LjQ1MSAxOTIuMjMzIDI3OC45MSAxODMuNTk1IDMxMS4xNDlDMTc0Ljk1NyAzNDMuMzkxIDE4NC45MjcgMzc2LjIzMiAyMDYuOTI0IDM5OC4yNzRDMTk4Ljg5NiA0MjguMzU5IDIwNi42ODMgNDYxLjc4OSAyMzAuMjg0IDQ4NS4zOTFDMjUzLjg4NSA1MDguOTkyIDI4Ny4zMTMgNTE2Ljc3OSAzMTcuNDAxIDUwOC43NUMzMzkuNDQyIDUzMC43NDUgMzcyLjI4NiA1NDAuNzE3IDQwNC41MjUgNTMyLjA3OUM0MzYuNzY3IDUyMy40NDEgNDYwLjIyMyA0OTguMzg0IDQ2OC4zMTMgNDY4LjMxNUM0OTguMzgzIDQ2MC4yMjQgNTIzLjQ0IDQzNi43NjYgNTMyLjA3OCA0MDQuNTI2QzU0MC43MTYgMzcyLjI4NSA1MzAuNzQ3IDMzOS40NDMgNTA4L_D94NDMyLjA3OVYzMTcuMzk5Wk00NzAuODk5IDI0NC43NzZDNDg2Ljg5MiAyNjAuNzcANDkzLjQ4OCAyODIuNjAxIDQ5MC42ODcgMzAzLjQxMkw0MTUuNTc3IDI2MC4wNDZDNDEyLjQxMSAyNTguMjE4IDQwOC41MDkgMjU4LjIxOCA0MDUuMzQ1IDI2MC4wNDZMMzE3LjQwMSAzMTAuODJWMjc3LjUyNkMzMTcuNDAxIDI3NS4xOTEgMzE4LjY1MiAyNzMuMDA1IDMyMC42NzYgMjcxLjgzN0wzODcuNjQ0IDIzMy4xNzRDNDE0LjE3OCAyMTguMzUzIDQ0OC4zNDYgMjIyLjIyMyA0NzAuOTAxIDI0NC43NzZINDcwLjg5OVpNMzU3LjgzNyAzMTEuMTQ0TDM5OC4yNzUgMzM0LjQ5MVYzODEuMTg1TDM1Ny44MzcgNDA0LjUzMkwzMTcuMzk4IDM4MS4xODVWMzM0LjQ5MUwzNTcuODM3IDMxMS4xNDRaTTI2NC43NzYgMjY5LjY5M0MyNjUuMjA3IDIzOS4zMDUgMjg1LjY0NCAyMTEuNjQ5IDMxNi40NTMgMjAzLjM5M0MzMzguMyAxOTcuNTQgMzYwLjUwNSAyMDIuNzQ0IDM3Ny4xMjcgMjE1LjU3M0wzMDIuMDE0IDI1OC45MzdDMjk4Ljg0OCAyNjAuNzY0IDI5Ni44OTggMjY0LjE0NCAyOTYuODk4IDI2Ny43OThWMzY5LjM0NkwyNjguMDY1IDM1Mi42OTlDMjY2LjA0MyAzNTEuNTMxIDI2NC43NzYgMzQ5LjM1MyAyNjQuNzc2IDM0Ny4wMTdWMjY5LjY5MVYyNjkuNjkzWk0yMDMuMzkxIDMxNi40NTRDMjA5LjI0NCAyOTQuNjA4IDIyNC44NTQgMjc3Ljk3OCAyNDQuMjc2IDI2OS45OTlWMzU2LjczQzI0NC4yNzYgMzYwLjM4NCAyNDYuMjI2IDM2My43NjMgMjQ5LjM5MiAzNjUuNTkxTDMzNy4zMzcgNDE2LjM2NUwzMDguNTAzIDQzMy4wMTNDMzA2LjQ4MSA0MzQuMTgxIDMwMy45NjEgNDM0LjE4OCAzMDEuOTM5IDQzMy4wMkwyMzQuOTcxIDM5NC4zNTdDMjA4Ljg2OCAzNzguNzg5IDE5NS4xMzggMzQ3LjI2MSAyMDMuMzkxIDMxNi40NTRaTTI0NC43NzUgNDcwLjlDMjI4Ljc4MSA0NTQuOTA2IDIyMi4xODYgNDMzLjA3NSAyMjQuOTg2IDQxMi4yNjRMMzAwLjA5NiA0NTUuNjNDMzAzLjI2MyA0NTcuNDU3IDMwNy4xNjQgNDU3LjQ1NyAzMTAuMzI4IDQ1NS42M0wzOTguMjczIDQwNC44NTZWNDM4LjE0OUMzOTguMjczIDQ0MC40ODUgMzk3LjAyMiA0NDIuNjcxIDM5NC45OTcgNDQzLjgzOUwzMjguMDI5IDQ4Mi41MDJDMzAxLjQ5NSA0OTcuMzIyIDI2Ny4zMjcgNDkzLjQ1MiAyNDQuNzcyIDQ3MC45SDI0NC43NzVaTTQ1MC44OTcgNDQ1Ljk4MkM0NTAuNDY2IDQ3Ni4zNzEgNDMwLjAyOSA1MDQuMDI3IDM5OS4yMiA1MTIuMjgzQzM3Ny4zNzMgNTE4LjEzNiAzNTUuMTY4IDUxMi45MzIgMzM4LjU0NyA1MDAuMTAyTDQxMy42NTkgNDU2LjczOEM0MTYuODI2IDQ1NC45MTEgNDE4Ljc3NSA0NTEuNTMyIDQxOC43NzUgNDQ3Ljg3N1YzNDYuMzI5TDQ0Ny42MDkgMzYyLjk3N0M0NDkuNjMxIDM2NC4xNDUgNDUwLjg5NyAzNjYuMzIzIDQ1MC44OTcgMzY4LjY1OVY0NDUuOTg1VjQ0NS45ODJaTTUxMi4yODIgMzk5LjIyMUM1MDYuNDI5IDQyMS4wNjggNDkwLjgxOSA0MzcuNjk3IDQ3MS4zOTcgNDQ1LjY3NlYzNTguOTQ2QzQ3MS4zOTcgMzU1LjI5MiA0NjkuNDQ4IDM1MS45MTIgNDY2LjI4MSAzNTAuMDg1TDM3OC4zMzYgMjk5LjMxMUw0MDcuMTcgMjgyLjY2M0M0MDkuMTkyIDI4MS40OTUgNDExLjcxMiAyODEuNDg3IDQxMy4zNzQgMjgyLjY1NUw0ODAuNzAyIDMyMS4zMThDNTA2LjgwNSAzMzYuODg3IDUyMC41MzYgMzY4LjQxNSA1MTIuMjgyIDM5OS4yMjFaIiBhbHQ9IkNoZXNzWCBMb2dvIj4
+    </div>
+
+    <!-- Welcome Message with Logo Animation -->
+    <div id="adminWelcome">
+      <img id="welcomeLogoImg" src="" alt="ChessX Logo">
+      <div id="welcomeText"></div>
+    </div>
+
+    <!-- Admin Login Section -->
+    <div id="adminLoginForm">
+      <div class="form-tag">ADMIN ACCESS</div>
+      <div class="form-title">Verification Required</div>
+      <div class="divider"></div>
+      
+      <label class="field-label">Admin ID<span class="req">*</span></label>
+      <input type="text" id="adminIdInput" placeholder="Enter Admin ID">
+      
+      <label class="field-label">Admin PIN<span class="req">*</span></label>
+      <input type="password" id="adminPinInput" maxlength="6" placeholder="Enter 6 digit PIN" inputmode="numeric">
+      
+      <button type="button" id="loginBtn">VERIFY & LOGIN</button>
+      <div class="err-msg" id="loginErr" style="text-align:center; margin-top:15px;">Invalid Admin ID or PIN.</div>
+    </div>
+
+    <!-- Registration Form Section (Initially Hidden) -->
+    <div id="registrationForm">
+      <div class="form-tag">ADMIN FORM_01 · IPREG</div>
+      <div class="form-title">Individual Person Registration Form</div>
+      <div class="divider"></div>
+
+      <div class="next-id-msg" id="nextIdMsg"></div>
+
+      <form id="ipForm">
+        <label class="field-label">Do you have FIDE ID?<span class="req">*</span></label>
+        <div class="toggle-yesno">
+          <label id="fideYesLbl"><input type="radio" name="hasFide" id="fideYes" value="yes"> YES</label>
+          <label id="fideNoLbl"><input type="radio" name="hasFide" id="fideNo" value="no"> NO</label>
+        </div>
+
+        <!-- SHARED BLOCKS (Initially hidden, shown based on selection) -->
+        <div id="formContent" style="display:none;">
+          <!-- FIDE Details (Only for YES) -->
+          <div id="fideSection" style="display:none;">
+            <div class="section-label">FIDE Details</div>
+            <label class="field-label">FIDE ID<span class="req">*</span></label>
+            <input type="text" id="fideId" placeholder="Enter FIDE ID" inputmode="numeric">
+          </div>
+
+          <!-- Basic Details (Only for NO) -->
+          <div id="basicSection" style="display:none;">
+            <div class="section-label">Basic Details</div>
+            <label class="field-label">Full Name<span class="req">*</span></label>
+            <input type="text" id="name_n" placeholder="Enter Full Name">
+          </div>
+
+          <!-- Common Fields (Optional for Admin) -->
+          <div id="commonFields">
+            <label class="field-label">AICF ID<span class="opt">(optional)</span></label>
+            <input type="text" id="aicfId" placeholder="Enter AICF ID">
+
+            <!-- FIDE Rating Fields (Only for YES) -->
+            <div id="ratingSection" style="display:none;">
+              <div class="pin-row">
+                <div>
+                  <label class="field-label">Standard Rating<span class="opt">(optional)</span></label>
+                  <input type="text" id="stdRating" placeholder="0" inputmode="numeric">
+                </div>
+                <div>
+                  <label class="field-label">Rapid Rating<span class="opt">(optional)</span></label>
+                  <input type="text" id="rapidRating" placeholder="0" inputmode="numeric">
+                </div>
+              </div>
+              <div class="pin-row">
+                <div>
+                  <label class="field-label">Blitz Rating<span class="opt">(optional)</span></label>
+                  <input type="text" id="blitzRating" placeholder="0" inputmode="numeric">
+                </div>
+                <div>
+                  <label class="field-label">FIDE Title<span class="opt">(optional)</span></label>
+                  <select id="title">
+                    <option value="">None</option>
+                    <option value="GM">GM</option><option value="WGM">WGM</option>
+                    <option value="IM">IM</option><option value="WIM">WIM</option>
+                    <option value="FM">FM</option><option value="WFM">WFM</option>
+                    <option value="CM">CM</option><option value="WCM">WCM</option>
+                  </select>
+                </div>
+              </div>
+              <div class="pin-row">
+                <div>
+                  <label class="field-label">Arbiter Title<span class="opt">(optional)</span></label>
+                  <select id="arbiterTitle">
+                    <option value="">None</option>
+                    <option value="IA">IA</option><option value="FA">FA</option><option value="NA">NA</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="field-label">Trainer Title<span class="opt">(optional)</span></label>
+                  <select id="trainerTitle">
+                    <option value="">None</option>
+                    <option value="FST">FST</option><option value="FT">FT</option><option value="FI">FI</option><option value="NI">NI</option><option value="DI">DI</option>
+                  </select>
+                </div>
+              </div>
+              <label class="field-label">Arena Title<span class="opt">(optional)</span></label>
+              <select id="arenaTitle">
+                <option value="">None</option>
+                <option value="AGM">AGM</option><option value="AIM">AIM</option><option value="AFM">AFM</option><option value="ACM">ACM</option>
+              </select>
+            </div>
+
+            <div class="section-label">Personal Details</div>
+            <label class="field-label">Date of Birth<span class="opt">(optional)</span></label>
+            <div style="position:relative;">
+              <input type="text" id="dobText" placeholder="DD/MM/YYYY" maxlength="10">
+              <input type="date" id="dobPicker" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);width:34px;height:30px;padding:0;opacity:0.6;cursor:pointer;">
+            </div>
+
+            <label class="field-label">Gender / Sex<span class="opt">(optional)</span></label>
+            <select id="gender">
+              <option value="">Select Gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Transgender">Transgender</option>
+            </select>
+
+            <label class="field-label">Country<span class="opt">(optional)</span></label>
+            <div class="dropdown-wrap">
+              <input type="text" id="countryInput" placeholder="Search country" autocomplete="off">
+              <div class="dropdown-list" id="countryList"></div>
+            </div>
+
+            <label class="field-label">State<span class="opt">(optional)</span></label>
+            <div class="dropdown-wrap">
+              <input type="text" id="stateInput" placeholder="Search state" autocomplete="off">
+              <div class="dropdown-list" id="stateList"></div>
+            </div>
+
+            <label class="field-label">District<span class="opt">(optional)</span></label>
+            <div class="dropdown-wrap">
+              <input type="text" id="districtInput" placeholder="Search district (Gujarat)" autocomplete="off">
+              <div class="dropdown-list" id="districtList"></div>
+            </div>
+
+            <label class="field-label">Contact No<span class="opt">(optional)</span></label>
+            <div class="phone-row">
+              <div class="code">+91</div>
+              <input type="text" id="contactNo" inputmode="numeric" placeholder="10 digit mobile number">
+            </div>
+
+            <label class="field-label">WhatsApp No<span class="opt">(optional)</span></label>
+            <div class="phone-row">
+              <div class="code">+91</div>
+              <input type="text" id="waNo" inputmode="numeric" placeholder="10 digit WhatsApp number">
+            </div>
+            <div class="same-row">
+              <input type="checkbox" id="sameWA">
+              <label for="sameWA">Same as Contact No</label>
+            </div>
+
+            <label class="field-label">Email ID<span class="opt">(optional)</span></label>
+            <input type="email" id="email" placeholder="email@example.com">
+            <div class="err-msg" id="emailErr">Please enter a valid email address.</div>
+
+            <label class="field-label">Lichess ID<span class="opt">(optional)</span></label>
+            <input type="text" id="lichess" placeholder="Lichess username">
+
+            <label class="field-label">Chess.com ID<span class="opt">(optional)</span></label>
+            <input type="text" id="chesscom" placeholder="Chess.com username">
+
+            <div class="section-label">Set Your chessX IP PIN</div>
+            <div class="pin-row">
+              <div>
+                <label class="field-label">IP PIN<span class="opt">(optional)</span></label>
+                <input type="password" id="ipPin" maxlength="6" placeholder="6 digit PIN" inputmode="numeric">
+              </div>
+              <div>
+                <label class="field-label">Confirm IP PIN<span class="opt">(optional)</span></label>
+                <input type="password" id="ipPinConfirm" maxlength="6" placeholder="Re-enter PIN" inputmode="numeric">
+              </div>
+            </div>
+            <div class="err-msg" id="pinErr">PIN must be exactly 6 digits and both must match.</div>
+          </div>
+          <button type="button" id="registerBtn">REGISTER</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Success Modal -->
+<div class="modal-overlay" id="successModal">
+  <div class="modal-box">
+    <div style="font-size:34px;">✅</div>
+    <h2>Your registration is successful as IP (Individual Person) at ChessX</h2>
+    <div class="modal-detail" id="modalDetail"></div>
+    <button class="copy-btn" id="copyBtn">Copy Details</button>
+    <div class="note-warn">⚠ Don't share your IP PIN with anyone. Keep it safe and save at another place.</div>
+    <div class="note-info">
+      With this chessX IP ID and your chessX IP PIN you can register in tournaments, and you can also edit or modify your profile using these details.
+    </div>
+    <button class="register-another" id="registerAnotherBtn">Register Another</button>
+  </div>
+</div>
+
+<div class="spinner-overlay" id="spinnerOverlay">
+  <div class="loader-stage">
+    <div class="loader-ring"></div>
+    <div class="loader-ring delay"></div>
+    <img class="loader-logo" id="loaderLogoImg" src="" alt="Loading">
+  </div>
+  <div class="loader-text">Registering your details<span>.</span><span>.</span><span>.</span></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, addDoc, query, where, getDocs, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBApKwOIjF4pk0PJZBJo7GM8a7a8ECRIxU",
+  authDomain: "chessx-4e0ec.firebaseapp.com",
+  projectId: "chessx-4e0ec",
+  storageBucket: "chessx-4e0ec.firebasestorage.app",
+  messagingSenderId: "888357289080",
+  appId: "1:888357289080:web:5ecdf9890bf09408eac18d"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const COLLECTION_NAME = "ipdbchessX";
+const ADMIN_COLLECTION = "adminpwddb";
+
+let currentAdminId = "";
+const mainLogoSrc = document.getElementById("mainLogoImg").src;
+
+/* ---------- Setup Initial UI ---------- */
+(function initUI(){
+  document.getElementById("loaderLogoImg").src = mainLogoSrc;
+  document.getElementById("welcomeLogoImg").src = mainLogoSrc;
+  
+  // Enforce Admin ID uppercase
+  const adminIdInput = document.getElementById("adminIdInput");
+  adminIdInput.addEventListener("input", () => {
+    adminIdInput.value = adminIdInput.value.toUpperCase();
+  });
+})();
+
+/* ---------- Admin Login Logic ---------- */
+const adminLoginForm = document.getElementById("adminLoginForm");
+const registrationForm = document.getElementById("registrationForm");
+const loginBtn = document.getElementById("loginBtn");
+const adminWelcome = document.getElementById("adminWelcome");
+const mainLogoBox = document.getElementById("mainLogoBox");
+
+loginBtn.addEventListener("click", async () => {
+  const adminId = document.getElementById("adminIdInput").value.trim();
+  const adminPin = document.getElementById("adminPinInput").value.trim();
+  const loginErr = document.getElementById("loginErr");
+
+  if (!adminId || !adminPin) {
+    alert("Please enter Admin ID and PIN.");
+    return;
+  }
+
+  try {
+    const q = query(collection(db, ADMIN_COLLECTION), where("adminId", "==", adminId));
+    const querySnapshot = await getDocs(q);
+
+    let authenticated = false;
+    if (!querySnapshot.empty) {
+      querySnapshot.forEach((doc) => {
+        if (doc.data().adminPin == adminPin) authenticated = true;
+      });
+    }
+
+    if (authenticated) {
+      currentAdminId = adminId;
+      document.getElementById("welcomeText").innerText = "WELCOME " + adminId;
+      adminWelcome.style.display = "flex";
+      mainLogoBox.style.display = "none";
+      adminLoginForm.style.display = "none";
+      registrationForm.style.display = "block";
+    } else {
+      loginErr.style.display = "block";
+    }
+  } catch (error) {
+    alert("Login Error: " + error.message);
+  }
+});
+
+/* ---------- FIDE Toggle Logic ---------- */
+const fideYes = document.getElementById("fideYes");
+const fideNo = document.getElementById("fideNo");
+const formContent = document.getElementById("formContent");
+const fideSection = document.getElementById("fideSection");
+const basicSection = document.getElementById("basicSection");
+const ratingSection = document.getElementById("ratingSection");
+const nextIdMsg = document.getElementById("nextIdMsg");
+
+function handleFideToggle() {
+  formContent.style.display = "block";
+  const isYes = fideYes.checked;
+  
+  document.getElementById("fideYesLbl").classList.toggle("active", isYes);
+  document.getElementById("fideNoLbl").classList.toggle("active", !isYes);
+  
+  fideSection.style.display = isYes ? "block" : "none";
+  ratingSection.style.display = isYes ? "block" : "none";
+  basicSection.style.display = isYes ? "none" : "block";
+  
+  nextIdMsg.style.display = "block";
+  updateIpIdMessage(isYes);
+}
+
+fideYes.addEventListener("change", handleFideToggle);
+fideNo.addEventListener("change", handleFideToggle);
+
+/* ---------- ipId Logic ---------- */
+async function updateIpIdMessage(isYes) {
+  if (isYes) {
+    nextIdMsg.innerText = "Your FIDE ID is your ChessX IP ID";
+    nextIdMsg.style.color = "#1a8a3a";
+  } else {
+    nextIdMsg.innerText = "Checking database...";
+    const nextId = await calculateNextIpId();
+    nextIdMsg.innerText = "Last IP ID generated is " + nextId.lastId + ", so your IP ID will be " + nextId.nextId;
+    nextIdMsg.style.color = "#1a8a3a";
+  }
+}
+
+async function calculateNextIpId() {
+  const now = new Date();
+  const dd = String(now.getDate()).padStart(2, '0');
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const yyyy = now.getFullYear();
+  const dateStr = `${dd}${mm}${yyyy}`;
+  const prefix = "IP" + dateStr;
+
+  try {
+    const q = query(
+      collection(db, COLLECTION_NAME),
+      where("ipId", ">=", prefix),
+      where("ipId", "<", prefix + "\uf8ff"),
+      orderBy("ipId", "desc"),
+      limit(1)
+    );
+    const snap = await getDocs(q);
+    
+    let lastNum = 0;
+    let lastId = "None";
+    
+    if (!snap.empty) {
+      const latestDoc = snap.docs[0].data().ipId;
+      lastId = latestDoc;
+      const suffix = latestDoc.substring(prefix.length);
+      lastNum = parseInt(suffix) || 0;
+    }
+    
+    return {
+      lastId: lastId === "None" ? "None" : lastId,
+      nextId: prefix + (lastNum + 1)
+    };
+  } catch (e) {
+    console.error(e);
+    return { lastId: "Error", nextId: prefix + "1" };
+  }
+}
+
+/* ---------- Form Helpers ---------- */
+const indianStates = ["Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh","Goa","Gujarat","Haryana","Himachal Pradesh","Jharkhand","Karnataka","Kerala","Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram","Nagaland","Odisha","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana","Tripura","Uttar Pradesh","Uttarakhand","West Bengal","Andaman and Nicobar Islands","Chandigarh","Dadra and Nagar Haveli and Daman and Diu","Delhi","Jammu and Kashmir","Ladakh","Lakshadweep","Puducherry"];
+const gujaratDistricts = ["Ahmedabad","Amreli","Anand","Aravalli","Banaskantha","Bharuch","Bhavnagar","Botad","Chhota Udepur","Dahod","Dang","Devbhoomi Dwarka","Gandhinagar","Gir Somnath","Jamnagar","Junagadh","Kheda","Kutch","Mahisagar","Mehsana","Morbi","Narmada","Navsari","Panchmahal","Patan","Porbandar","Rajkot","Sabarkantha","Surat","Surendranagar","Tapi","Vadodara","Valsad"];
+
+function setupDropdown(inputId, listId, options){
+  const input = document.getElementById(inputId);
+  const list = document.getElementById(listId);
+  function render(filter){
+    const f = (filter||"").toLowerCase();
+    const matches = options.filter(o=>o.toLowerCase().includes(f)).sort();
+    list.innerHTML = "";
+    if(matches.length===0){
+      list.innerHTML = "<div class='disabled-opt'>No match found</div>";
+    } else {
+      matches.forEach(opt=>{
+        const div = document.createElement("div");
+        div.textContent = opt;
+        div.addEventListener("click", ()=>{ input.value = opt; list.style.display="none"; });
+        list.appendChild(div);
+      });
+    }
+    list.style.display="block";
+  }
+  input.addEventListener("focus", ()=>render(input.value));
+  input.addEventListener("input", ()=>render(input.value));
+  document.addEventListener("click",(e)=>{
+    if(!input.contains(e.target) && !list.contains(e.target)) list.style.display="none";
+  });
+}
+
+setupDropdown("countryInput", "countryList", ["India"]);
+setupDropdown("stateInput", "stateList", [...indianStates].sort());
+setupDropdown("districtInput", "districtList", [...gujaratDistricts].sort());
+
+function bindUpper(id){
+  const el = document.getElementById(id);
+  el.addEventListener("input", ()=>{ el.value = el.value.toUpperCase(); });
+}
+bindUpper("aicfId"); bindUpper("name_n");
+
+document.getElementById("fideId").addEventListener("input", function(){
+  this.value = this.value.replace(/\D/g,"");
+});
+
+["stdRating","rapidRating","blitzRating","contactNo","waNo","ipPin","ipPinConfirm"].forEach(id=>{
+  document.getElementById(id).addEventListener("input", function(){
+    this.value = this.value.replace(/\D/g,"");
+    if(id.includes("Pin")) this.value = this.value.slice(0,6);
+    if(id.includes("No")) this.value = this.value.slice(0,10);
+  });
+});
+
+document.getElementById("sameWA").addEventListener("change", function(){
+  const contact = document.getElementById("contactNo");
+  const wa = document.getElementById("waNo");
+  if(this.checked){ wa.value = contact.value; wa.disabled = true; }
+  else { wa.disabled = false; }
+});
+
+const dobText = document.getElementById("dobText");
+const dobPicker = document.getElementById("dobPicker");
+dobText.addEventListener("input", ()=>{ dobText.value = dobText.value.replace(/[^\d/]/g,""); });
+dobPicker.addEventListener("change", ()=>{
+  if(dobPicker.value){
+    const p = dobPicker.value.split("-");
+    dobText.value = p[2]+"/"+p[1]+"/"+p[0];
+  }
+});
+
+/* ---------- Submission Logic ---------- */
+document.getElementById("registerBtn").addEventListener("click", async () => {
+  const isYes = fideYes.checked;
+  const fideId = document.getElementById("fideId").value.trim();
+  const name = document.getElementById("name_n").value.trim();
+  
+  if (isYes && !fideId) { alert("Please enter FIDE ID."); return; }
+  if (!isYes && !name) { alert("Please enter Full Name."); return; }
+
+  const pin = document.getElementById("ipPin").value;
+  const pinConf = document.getElementById("ipPinConfirm").value;
+  if ((pin || pinConf) && (pin !== pinConf || pin.length !== 6)) {
+    alert("PIN must be 6 digits and match."); return;
+  }
+
+  document.getElementById("spinnerOverlay").style.display = "flex";
+
+  try {
+    let finalIpId = isYes ? fideId : (await calculateNextIpId()).nextId;
+    
+    const docData = {
+      ipId: finalIpId,
+      hasFide: isYes,
+      fideId: isYes ? fideId : "",
+      name: isYes ? "" : name,
+      aicfId: document.getElementById("aicfId").value,
+      dob: document.getElementById("dobText").value,
+      gender: document.getElementById("gender").value,
+      country: document.getElementById("countryInput").value,
+      state: document.getElementById("stateInput").value,
+      district: document.getElementById("districtInput").value,
+      contactNo: document.getElementById("contactNo").value,
+      waNo: document.getElementById("waNo").value,
+      email: document.getElementById("email").value,
+      lichessId: document.getElementById("lichess").value,
+      chesscomId: document.getElementById("chesscom").value,
+      ipPin: pin,
+      stdRating: isYes ? document.getElementById("stdRating").value : "",
+      rapidRating: isYes ? document.getElementById("rapidRating").value : "",
+      blitzRating: isYes ? document.getElementById("blitzRating").value : "",
+      fideTitle: isYes ? document.getElementById("title").value : "",
+      arbiterTitle: isYes ? document.getElementById("arbiterTitle").value : "",
+      trainerTitle: isYes ? document.getElementById("trainerTitle").value : "",
+      arenaTitle: isYes ? document.getElementById("arenaTitle").value : "",
+      enteredBy: currentAdminId,
+      registeredAt: new Date().toLocaleDateString('en-GB'),
+      registeredTime: new Date().toLocaleTimeString('en-GB', {hour12:false, hour:'2-digit', minute:'2-digit'})
+    };
+
+    await addDoc(collection(db, COLLECTION_NAME), docData);
+    
+    document.getElementById("spinnerOverlay").style.display = "none";
+    document.getElementById("modalDetail").innerHTML = `
+      <b>chessX IP ID:</b> ${finalIpId}<br>
+      <b>Name/FIDE ID:</b> ${isYes ? fideId : name}<br>
+      <b>Registered By:</b> ${currentAdminId}
+    `;
+    document.getElementById("successModal").style.display = "flex";
+  } catch (e) {
+    document.getElementById("spinnerOverlay").style.display = "none";
+    alert("Error: " + e.message);
+  }
+});
+
+document.getElementById("registerAnotherBtn").addEventListener("click", () => location.reload());
+document.getElementById("copyBtn").addEventListener("click", () => {
+  navigator.clipboard.writeText(document.getElementById("modalDetail").innerText);
+  document.getElementById("copyBtn").innerText = "COPIED!";
+  setTimeout(() => { document.getElementById("copyBtn").innerText = "Copy Details"; }, 2000);
+});
+
+</script>
+</body>
+</html>
