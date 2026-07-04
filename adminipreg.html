@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ADMINIPREG | ChessX</title>
+<style>
+  :root{
+    --blue-dark:#0d1b6e;
+    --blue-mid:#1a3fad;
+    --blue-accent:#1565C0;
+    --sky:#29b6f6;
+    --bg:#f0f4ff;
+    --card:#ffffff;
+    --border:#c5d3f0;
+    --text:#111827;
+    --muted:#6b7280;
+    --red:#dc2626;
+    --green:#16a34a;
+    --disabled-bg:#e5e7eb;
+    --disabled-text:#9ca3af;
+    --shadow:0 2px 12px rgba(13,27,110,0.10);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+  /* ── LOGIN OVERLAY ── */
+  #loginOverlay{position:fixed;inset:0;background:linear-gradient(135deg,var(--blue-dark) 0%,var(--blue-mid) 60%,var(--sky) 100%);display:flex;align-items:center;justify-content:center;z-index:9999;}
+  .loginCard{background:#fff;border-radius:18px;padding:36px 32px 30px;width:340px;max-width:95vw;box-shadow:0 8px 40px rgba(0,0,0,0.25);text-align:center;}
+  .loginCard .logo{width:200px;margin-bottom:14px;}
+  .loginCard h2{font-size:1.05rem;color:var(--blue-dark);letter-spacing:1px;margin-bottom:22px;font-weight:700;}
+  .loginCard label{display:block;text-align:left;font-size:0.78rem;font-weight:600;color:var(--blue-dark);margin-bottom:4px;letter-spacing:.5px;}
+  .loginCard input{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:9px 12px;font-size:0.95rem;margin-bottom:14px;outline:none;transition:border .2s;}
+  .loginCard input:focus{border-color:var(--blue-accent);}
+  .loginCard .loginBtn{width:100%;background:linear-gradient(90deg,var(--blue-dark),var(--blue-accent));color:#fff;border:none;border-radius:8px;padding:11px;font-size:1rem;font-weight:700;cursor:pointer;letter-spacing:.5px;margin-top:4px;}
+  .loginCard .loginBtn:hover{opacity:.92;}
+  #loginErr{color:var(--red);font-size:0.82rem;margin-top:8px;min-height:18px;}
+
+  /* ── WELCOME ANIMATION ── */
+  #welcomeOverlay{position:fixed;inset:0;background:linear-gradient(135deg,var(--blue-dark) 0%,var(--blue-mid) 60%,var(--sky) 100%);display:none;align-items:center;justify-content:center;z-index:9998;flex-direction:column;}
+  #welcomeOverlay .wLogo{width:220px;animation:pulse 1s ease-in-out infinite alternate;}
+  #welcomeOverlay .wMsg{color:#fff;font-size:1.4rem;font-weight:700;margin-top:24px;letter-spacing:2px;text-align:center;}
+  @keyframes pulse{from{transform:scale(1);opacity:.9;}to{transform:scale(1.07);opacity:1;}}
+
+  /* ── MAIN APP ── */
+  #mainApp{display:none;padding:0 0 60px;}
+
+  /* header */
+  .appHeader{background:linear-gradient(90deg,var(--blue-dark),var(--blue-accent));padding:14px 20px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 8px rgba(0,0,0,.18);}
+  .appHeader img{height:40px;}
+  .appHeader .hTitle{color:#fff;}
+  .appHeader .hTitle .form-code{font-size:.72rem;letter-spacing:2px;opacity:.8;font-weight:600;}
+  .appHeader .hTitle .form-name{font-size:1.08rem;font-weight:700;letter-spacing:.5px;}
+  .appHeader .hTitle .form-sub{font-size:.72rem;opacity:.75;}
+  .appHeader .adminBadge{margin-left:auto;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:5px 14px;color:#fff;font-size:.78rem;font-weight:600;}
+
+  /* mode selector */
+  .modeSection{max-width:700px;margin:30px auto 0;padding:0 16px;}
+  .modeSection h3{font-size:.85rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px;}
+  .modeBtns{display:flex;gap:14px;flex-wrap:wrap;}
+  .modeBtn{flex:1;min-width:180px;padding:18px 14px;border:2px solid var(--border);border-radius:12px;background:#fff;cursor:pointer;text-align:center;transition:all .2s;font-size:.95rem;font-weight:600;color:var(--blue-dark);}
+  .modeBtn:hover{border-color:var(--blue-accent);background:#e8efff;}
+  .modeBtn.active{border-color:var(--blue-dark);background:linear-gradient(135deg,var(--blue-dark),var(--blue-accent));color:#fff;}
+  .modeBtn .mIcon{font-size:1.6rem;display:block;margin-bottom:6px;}
+
+  /* form container */
+  .formWrap{max-width:700px;margin:22px auto 0;padding:0 16px;}
+
+  /* section header */
+  .secHeader{background:linear-gradient(90deg,var(--blue-dark),var(--blue-accent));color:#fff;padding:8px 16px;border-radius:8px;font-size:.82rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin:22px 0 14px;}
+
+  /* question row */
+  .qRow{margin-bottom:14px;}
+  .qLabel{font-size:.8rem;font-weight:600;color:var(--blue-dark);margin-bottom:5px;display:flex;align-items:center;gap:6px;}
+  .qLabel .req{color:var(--red);font-size:.85rem;}
+  .qInput{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:9px 12px;font-size:.93rem;outline:none;transition:border .2s;background:#fff;}
+  .qInput:focus{border-color:var(--blue-accent);}
+  .qInput:disabled{background:var(--disabled-bg);color:var(--disabled-text);cursor:not-allowed;}
+  .qSelect{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:9px 12px;font-size:.93rem;outline:none;background:#fff;transition:border .2s;}
+  .qSelect:focus{border-color:var(--blue-accent);}
+  .qSelect:disabled{background:var(--disabled-bg);color:var(--disabled-text);}
+  .qTextarea{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:9px 12px;font-size:.88rem;outline:none;transition:border .2s;resize:vertical;min-height:180px;font-family:monospace;}
+  .qTextarea:focus{border-color:var(--blue-accent);}
+
+  /* radio group */
+  .radioGroup{display:flex;gap:16px;flex-wrap:wrap;}
+  .radioGroup label{display:flex;align-items:center;gap:6px;font-size:.9rem;cursor:pointer;padding:7px 14px;border:1.5px solid var(--border);border-radius:8px;transition:all .2s;}
+  .radioGroup label:has(input:checked){border-color:var(--blue-accent);background:#e8efff;font-weight:600;}
+  .radioGroup input[type=radio]{accent-color:var(--blue-dark);}
+
+  /* checkbox */
+  .checkRow{display:flex;align-items:center;gap:8px;font-size:.88rem;margin-top:6px;cursor:pointer;}
+  .checkRow input{accent-color:var(--blue-dark);width:16px;height:16px;}
+
+  /* search dropdown */
+  .searchDrop{position:relative;}
+  .searchDrop .dropList{position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid var(--blue-accent);border-radius:0 0 8px 8px;max-height:180px;overflow-y:auto;z-index:100;display:none;}
+  .searchDrop .dropList.open{display:block;}
+  .searchDrop .dropItem{padding:8px 12px;font-size:.88rem;cursor:pointer;}
+  .searchDrop .dropItem:hover{background:#e8efff;}
+
+  /* check button */
+  .checkBtn{background:var(--blue-mid);color:#fff;border:none;border-radius:8px;padding:9px 18px;font-size:.88rem;font-weight:600;cursor:pointer;margin-top:6px;}
+  .checkBtn:hover{background:var(--blue-dark);}
+
+  /* alert boxes */
+  .alertBox{border-radius:8px;padding:12px 14px;font-size:.85rem;margin-top:8px;display:none;}
+  .alertBox.warn{background:#fff3cd;border:1px solid #ffc107;color:#7d4e00;}
+  .alertBox.info{background:#e8efff;border:1px solid var(--blue-accent);color:var(--blue-dark);}
+  .alertBox.success{background:#dcfce7;border:1px solid #16a34a;color:#14532d;}
+  .alertBox.error{background:#fee2e2;border:1px solid #dc2626;color:#7f1d1d;}
+
+  /* register button */
+  .regBtn{width:100%;background:linear-gradient(90deg,var(--blue-dark),var(--blue-accent));color:#fff;border:none;border-radius:10px;padding:14px;font-size:1.05rem;font-weight:700;cursor:pointer;letter-spacing:.5px;margin-top:18px;}
+  .regBtn:hover{opacity:.92;}
+
+  /* success modal */
+  #successModal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:9990;padding:16px;}
+  .successCard{background:#fff;border-radius:18px;padding:32px 24px;max-width:420px;width:100%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.25);}
+  .successCard .sLogo{width:120px;margin-bottom:10px;}
+  .successCard h2{color:var(--green);font-size:1.1rem;margin-bottom:16px;}
+  .successCard .sDetail{background:#f0f7ff;border-radius:10px;padding:14px;margin:12px 0;text-align:left;}
+  .successCard .sDetail p{font-size:.88rem;margin-bottom:6px;}
+  .successCard .sDetail strong{color:var(--blue-dark);}
+  .successCard .copyBtn{background:var(--blue-mid);color:#fff;border:none;border-radius:8px;padding:9px 20px;font-size:.88rem;cursor:pointer;font-weight:600;}
+  .successCard .notice{font-size:.78rem;color:var(--muted);margin:12px 0;line-height:1.5;}
+  .successCard .sActions{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;}
+  .successCard .sActions button{flex:1;padding:10px;border-radius:8px;font-size:.88rem;font-weight:600;cursor:pointer;border:none;}
+  .successCard .sActions .btnAnother{background:var(--blue-dark);color:#fff;}
+  .successCard .sActions .btnDB{background:#e8efff;color:var(--blue-dark);border:1.5px solid var(--blue-accent);}
+
+  /* loading spinner inline */
+  .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* fide check result */
+  .fideResult{margin-top:8px;}
+
+  /* bulk info */
+  .bulkNote{background:#e8f0fe;border:1px solid #90a4e8;border-radius:8px;padding:10px 14px;font-size:.82rem;color:var(--blue-dark);margin-bottom:14px;}
+
+  /* hidden */
+  .hidden{display:none!important;}
+
+  /* register animation overlay */
+  #regAnim{position:fixed;inset:0;background:linear-gradient(135deg,var(--blue-dark),var(--blue-mid),var(--sky));display:none;align-items:center;justify-content:center;z-index:9997;flex-direction:column;}
+  #regAnim img{width:200px;animation:pulse 1s ease-in-out infinite alternate;}
+  #regAnim p{color:#fff;font-size:1rem;font-weight:600;margin-top:20px;letter-spacing:1px;}
+
+  @media(max-width:480px){
+    .appHeader .hTitle .form-name{font-size:.92rem;}
+    .modeBtns{flex-direction:column;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══ LOGIN OVERLAY ═══ -->
+<div id="loginOverlay">
+  <div class="loginCard">
+    <img class="logo" id="loginLogo" src="" alt="ChessX"/>
+    <h2>CHESSX ADMIN LOGIN</h2>
+    <label>ADMIN ID</label>
+    <input type="text" id="adminIdInput" placeholder="Enter Admin ID" autocomplete="off"/>
+    <label>ADMIN PIN</label>
+    <input type="password" id="adminPinInput" placeholder="6-digit PIN" maxlength="6" autocomplete="off"/>
+    <button class="loginBtn" onclick="doLogin()">LOGIN</button>
+    <div id="loginErr"></div>
+  </div>
+</div>
+
+<!-- ═══ WELCOME ANIMATION ═══ -->
+<div id="welcomeOverlay">
+  <img class="wLogo" id="welcomeLogo" src="" alt="ChessX"/>
+  <div class="wMsg" id="welcomeMsg">WELCOME</div>
+</div>
+
+<!-- ═══ REGISTER ANIMATION ═══ -->
+<div id="regAnim">
+  <img id="regAnimLogo" src="" alt="ChessX"/>
+  <p>Registering... Please wait</p>
+</div>
+
+<!-- ═══ SUCCESS MODAL ═══ -->
+<div id="successModal">
+  <div class="successCard">
+    <img class="sLogo" id="successLogo" src="" alt="ChessX"/>
+    <h2>✅ Registration Successful!</h2>
+    <p style="font-size:.88rem;color:#374151;">Your registration as IP is successful at ChessX platform</p>
+    <div class="sDetail" id="successDetail"></div>
+    <button class="copyBtn" onclick="copySuccessDetails()">📋 Copy Details</button>
+    <div class="notice">⚠️ Keep your ChessX IP PIN secure — do not share with anyone.<br>Save your ChessX IP ID and PIN carefully. These will be used for editing your ChessX IP Profile and for Registration in Chess Events.</div>
+    <div class="sActions">
+      <button class="btnAnother" onclick="registerAnother()">➕ Register Another</button>
+      <button class="btnDB" onclick="goToIPDB()">🗂 IP Database</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MAIN APP ═══ -->
+<div id="mainApp">
+
+  <!-- App Header -->
+  <div class="appHeader">
+    <img id="headerLogo" src="" alt="ChessX"/>
+    <div class="hTitle">
+      <div class="form-code">FORM_01 . ADMINIPREG</div>
+      <div class="form-name">Admin Individual Person Registration Form</div>
+      <div class="form-sub">ChessX Platform</div>
+    </div>
+    <div class="adminBadge" id="headerAdminBadge">ADMIN</div>
+  </div>
+
+  <!-- Mode Selector -->
+  <div class="modeSection">
+    <h3>Select Registration Mode</h3>
+    <div class="modeBtns">
+      <button class="modeBtn" id="btnSingle" onclick="setMode('single')">
+        <span class="mIcon">👤</span>Single IP Registration
+      </button>
+      <button class="modeBtn" id="btnBulk" onclick="setMode('bulk')">
+        <span class="mIcon">👥</span>Bulk IP Registration
+      </button>
+    </div>
+  </div>
+
+  <!-- ════ SINGLE REGISTRATION ════ -->
+  <div class="formWrap" id="singleForm" style="display:none;">
+
+    <!-- FIDE ID Question -->
+    <div class="secHeader">FIDE ID CHECK</div>
+    <div class="qRow">
+      <div class="qLabel">Do you have a FIDE ID?</div>
+      <div class="radioGroup">
+        <label><input type="radio" name="hasFide" value="yes" onchange="onFideChoice('yes')"/> YES</label>
+        <label><input type="radio" name="hasFide" value="no" onchange="onFideChoice('no')"/> NO</label>
+      </div>
+    </div>
+
+    <!-- FIDE YES block -->
+    <div id="fideYesBlock" class="hidden">
+      <div class="qRow">
+        <div class="qLabel">Q1. FIDE ID <span class="req">*</span></div>
+        <input type="text" id="s_fideId" class="qInput" placeholder="Enter FIDE ID (digits only)" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'')"/>
+        <button class="checkBtn" onclick="checkFideInDB()">🔍 Check in IP Database</button>
+        <div class="fideResult">
+          <div class="alertBox warn" id="fideDupAlert">
+            ⚠️ This FIDE ID is already available in our ChessX IP Database. You can check details by clicking below.<br>
+            <button class="checkBtn" style="margin-top:8px;" onclick="goToIPDB()">🗂 IP Database</button>
+          </div>
+          <div class="alertBox success" id="fideOkAlert">✅ FIDE ID is available. You may proceed with registration.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FIDE NO block -->
+    <div id="fideNoBlock" class="hidden">
+      <div class="alertBox info" style="display:block;margin-bottom:8px;">ℹ️ No FIDE ID — a ChessX IP ID will be auto-generated.</div>
+    </div>
+
+    <!-- MAIN FORM (shown after FIDE check) -->
+    <div id="singleMainForm" class="hidden">
+
+      <!-- ID Section -->
+      <div class="secHeader">ID SECTION</div>
+
+      <div class="qRow" id="row_s_aicfId">
+        <div class="qLabel">Q2. AICF ID</div>
+        <input type="text" id="s_aicfId" class="qInput" placeholder="AICF ID (auto UPPERCASE)" oninput="this.value=this.value.toUpperCase()"/>
+      </div>
+      <div class="qRow">
+        <div class="qLabel">Q3. LICHESS ID</div>
+        <input type="text" id="s_lichessId" class="qInput" placeholder="Lichess Username"/>
+      </div>
+      <div class="qRow">
+        <div class="qLabel">Q4. CHESS.COM ID</div>
+        <input type="text" id="s_chesscomId" class="qInput" placeholder="Chess.com Username"/>
+      </div>
+
+      <!-- Personal Details -->
+      <div class="secHeader">PERSONAL DETAILS</div>
+
+      <div class="qRow">
+        <div class="qLabel">Q5. Name <span id="nameReq" class="req"></span></div>
+        <input type="text" id="s_name" class="qInput" placeholder="Full Name (auto UPPERCASE)" oninput="this.value=this.value.replace(/[^A-Za-z\s]/g,'').toUpperCase()"/>
+      </div>
+      <div class="qRow">
+        <div class="qLabel">Q6. Date of Birth</div>
+        <input type="text" id="s_dob" class="qInput" placeholder="DD/MM/YYYY" maxlength="10" oninput="formatDOB(this)"/>
+      </div>
+      <div class="qRow">
+        <div class="qLabel">Q7. Birth Year</div>
+        <input type="text" id="s_birthYear" class="qInput" placeholder="YYYY" maxlength="4" oninput="this.value=this.value.replace(/\D/g,'')"/>
+      </div>
+      <div class="qRow">
+        <div class="qLabel">Q8. Gender / Sex</div>
+        <select id="s_gender" class="qSelect">
+          <option value="">-- Select --</option>
+          <option>MALE</option>
+          <option>FEMALE</option>
+        </select>
+      </div>
+      <div class="qRow">
+        <div class="qLabel">Q9. Contact No</div>
+        <input type="text" id="s_contactNo" class="qInput" placeholder="10-digit mobile number" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'')"/>
+      </div>
+      <div class="qRow">
+        <div class="qLabel">Q10. WhatsApp No</div>
+        <label class="checkRow"><input type="checkbox" id="s_waCheck" onchange="toggleWA()"/> Same as Contact No</label>
+        <input type="text" id="s_whatsappNo" class="qInput" style="margin-top:6px;" placeholder="10-digit WhatsApp number" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'')"/>
+      </div>
+      <div class="qRow">
+        <div class="qLabel">Q11. Email</div>
+        <input type="email" id="s_email" class="qInput" placeholder="email@example.com"/>
+      </div>
+      <div class="qRow">
+        <div class="qLabel">Q12. Country</div>
+        <div class="searchDrop" id="countryDrop">
+          <input type="text" id="s_country" class="qInput" placeholder="Search country..." value="India" oninput="filterDrop('countryDrop','s_country',countries)" onfocus="openDrop('countryDrop','s_country',countries)" onblur="blurDrop('countryDrop')" autocomplete="off"/>
+          <div class="dropList" id="countryDropList"></div>
+        </div>
+      </div>
+      <div class="qRow" id="stateRow">
+        <div class="qLabel">Q13. State</div>
+        <div class="searchDrop" id="stateDrop">
+          <input type="text" id="s_state" class="qInput" placeholder="Search state..." value="Gujarat" oninput="filterDrop('stateDrop','s_state',indianStates)" onfocus="openDrop('stateDrop','s_state',indianStates)" onblur="blurDrop('stateDrop')" autocomplete="off"/>
+          <div class="dropList" id="stateDropList"></div>
+        </div>
+      </div>
+      <div class="qRow" id="districtRow">
+        <div class="qLabel">Q14. District</div>
+        <div class="searchDrop" id="districtDrop">
+          <input type="text" id="s_district" class="qInput" placeholder="Search district..." oninput="filterDistrict()" onfocus="openDistrictDrop()" onblur="blurDrop('districtDrop')" autocomplete="off"/>
+          <div class="dropList" id="districtDropList"></div>
+        </div>
+      </div>
+      <div class="qRow">
+        <div class="qLabel">Q15. City / Taluka</div>
+        <input type="text" id="s_city" class="qInput" placeholder="City / Taluka (auto UPPERCASE)" oninput="this.value=this.value.replace(/[^A-Za-z\s]/g,'').toUpperCase()"/>
+      </div>
+      <div class="qRow">
+        <div class="qLabel">Q16. PIN Code</div>
+        <input type="text" id="s_postalCode" class="qInput" placeholder="6-digit PIN code" maxlength="6" oninput="this.value=this.value.replace(/\D/g,'')"/>
+      </div>
+
+      <!-- FIDE Ratings & Titles Section -->
+      <div id="fideRatingsSection">
+        <div class="secHeader">FIDE RATINGS &amp; TITLES</div>
+        <div class="qRow">
+          <div class="qLabel">Q17. Standard Rating</div>
+          <input type="text" id="s_stdRating" class="qInput" placeholder="e.g. 1850" maxlength="4" oninput="this.value=this.value.replace(/\D/g,'');updateAutoFields()"/>
+        </div>
+        <div class="qRow">
+          <div class="qLabel">Q18. Rapid Rating</div>
+          <input type="text" id="s_rapidRating" class="qInput" placeholder="e.g. 1750" maxlength="4" oninput="this.value=this.value.replace(/\D/g,'');updateAutoFields()"/>
+        </div>
+        <div class="qRow">
+          <div class="qLabel">Q19. Blitz Rating</div>
+          <input type="text" id="s_blitzRating" class="qInput" placeholder="e.g. 1700" maxlength="4" oninput="this.value=this.value.replace(/\D/g,'');updateAutoFields()"/>
+        </div>
+        <div class="qRow">
+          <div class="qLabel">Q20. FIDE Player Title</div>
+          <select id="s_title" class="qSelect" onchange="updateAutoFields()">
+            <option value="">-- None --</option>
+            <option>GM</option><option>IM</option><option>FM</option><option>CM</option>
+            <option>WGM</option><option>WIM</option><option>WFM</option><option>WCM</option>
+          </select>
+        </div>
+        <div class="qRow">
+          <div class="qLabel">Q21. FIDE Trainer Title</div>
+          <select id="s_trainerTitle" class="qSelect" onchange="updateAutoFields()">
+            <option value="">-- None --</option>
+            <option>DI</option><option>NI</option><option>FI</option><option>FT</option><option>FST</option>
+          </select>
+        </div>
+        <div class="qRow">
+          <div class="qLabel">Q22. FIDE Arbiter Title</div>
+          <select id="s_arbiterTitle" class="qSelect" onchange="updateAutoFields()">
+            <option value="">-- None --</option>
+            <option>NA</option><option>FA</option><option>IA</option>
+          </select>
+        </div>
+        <div class="qRow">
+          <div class="qLabel">Q23. FOA (FIDE Online Arena) Title</div>
+          <select id="s_arenaTitle" class="qSelect" onchange="updateAutoFields()">
+            <option value="">-- None --</option>
+            <option>AGM</option><option>AIM</option><option>AFM</option><option>ACM</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Membership -->
+      <div class="secHeader">MEMBERSHIP</div>
+      <div class="qRow">
+        <div class="qLabel">Q24. Membership Status</div>
+        <div class="radioGroup">
+          <label><input type="radio" name="s_membershipStatus" value="Active" onchange="onMembershipChange('Active')"/> Active</label>
+          <label><input type="radio" name="s_membershipStatus" value="Inactive" onchange="onMembershipChange('Inactive')"/> Inactive</label>
+        </div>
+      </div>
+      <div class="qRow" id="membershipTypeRow">
+        <div class="qLabel">Q25. Membership Type</div>
+        <select id="s_membershipType" class="qSelect" disabled>
+          <option value="">-- Select --</option>
+          <option>Platinum</option><option>Gold</option>
+        </select>
+      </div>
+      <div class="qRow" id="membershipStartRow">
+        <div class="qLabel">Q26. Membership Start Date</div>
+        <input type="text" id="s_membershipstartDate" class="qInput" placeholder="DD/MM/YYYY" disabled/>
+      </div>
+      <div class="qRow" id="membershipEndRow">
+        <div class="qLabel">Q27. Membership End Date</div>
+        <input type="text" id="s_membershipendDate" class="qInput" placeholder="DD/MM/YYYY" disabled/>
+      </div>
+
+      <!-- Auto Fields -->
+      <div class="secHeader">AUTO-GENERATED FIELDS</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="qRow">
+          <div class="qLabel">Q29. Rated Player</div>
+          <input type="text" id="s_ratedPlayer" class="qInput" disabled/>
+        </div>
+        <div class="qRow" id="row_s_fideTrainer">
+          <div class="qLabel">Q30. FIDE Trainer</div>
+          <input type="text" id="s_fideTrainer" class="qInput" disabled/>
+        </div>
+        <div class="qRow" id="row_s_fideArbiter">
+          <div class="qLabel">Q31. FIDE Arbiter</div>
+          <input type="text" id="s_fideArbiter" class="qInput" disabled/>
+        </div>
+        <div class="qRow" id="row_s_foa">
+          <div class="qLabel">Q32. Arena Player</div>
+          <input type="text" id="s_foa" class="qInput" disabled/>
+        </div>
+        <div class="qRow" id="row_s_tittlePlayer">
+          <div class="qLabel">Q33. Title Player</div>
+          <input type="text" id="s_tittlePlayer" class="qInput" disabled/>
+        </div>
+        <div class="qRow">
+          <div class="qLabel">Q34. Country Code</div>
+          <input type="text" id="s_countryCode" class="qInput" disabled/>
+        </div>
+        <div class="qRow">
+          <div class="qLabel">Q35. Time Zone</div>
+          <input type="text" id="s_timeZone" class="qInput" disabled/>
+        </div>
+        <div class="qRow">
+          <div class="qLabel">Q36. Entered By</div>
+          <input type="text" id="s_enteredBy" class="qInput" disabled/>
+        </div>
+        <div class="qRow">
+          <div class="qLabel">Q37. Date of Entry</div>
+          <input type="text" id="s_dateofEntry" class="qInput" disabled/>
+        </div>
+        <div class="qRow">
+          <div class="qLabel">Q38. Time of Entry</div>
+          <input type="text" id="s_timeofEntry" class="qInput" disabled/>
+        </div>
+        <div class="qRow">
+          <div class="qLabel">Q39. Edited By</div>
+          <input type="text" id="s_editedBy" class="qInput" disabled value=""/>
+        </div>
+        <div class="qRow">
+          <div class="qLabel">Q40. Date of Edit Entry</div>
+          <input type="text" id="s_dateofeditEntry" class="qInput" disabled value=""/>
+        </div>
+        <div class="qRow" style="grid-column:1/-1;">
+          <div class="qLabel">Q41. Time of Edit Entry</div>
+          <input type="text" id="s_timeofeditEntry" class="qInput" disabled value=""/>
+        </div>
+      </div>
+
+      <!-- ChessX IP PIN -->
+      <div class="secHeader">CREATE CHESSX IP PIN</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="qRow">
+          <div class="qLabel">Q42. Create IP PIN</div>
+          <input type="password" id="s_ipPin1" class="qInput" placeholder="6-digit PIN" maxlength="6" oninput="this.value=this.value.replace(/\D/g,'')"/>
+        </div>
+        <div class="qRow">
+          <div class="qLabel">Confirm IP PIN</div>
+          <input type="password" id="s_ipPin2" class="qInput" placeholder="Confirm PIN" maxlength="6" oninput="this.value=this.value.replace(/\D/g,'')"/>
+        </div>
+      </div>
+      <div class="qRow">
+        <div class="qLabel">Q43. ChessX IP ID</div>
+        <input type="text" id="s_ipId" class="qInput" disabled placeholder="Auto-generated"/>
+      </div>
+
+      <div class="alertBox error" id="singleFormErr" style="margin-top:8px;"></div>
+      <button class="regBtn" onclick="registerSingle()">🏁 REGISTER</button>
+    </div><!-- /singleMainForm -->
+  </div><!-- /singleForm -->
+
+  <!-- ════ BULK REGISTRATION ════ -->
+  <div class="formWrap" id="bulkForm" style="display:none;">
+    <div class="bulkNote">📋 <strong>Bulk Mode:</strong> Enter up to 100 entries per field, one per line. All fields are aligned by line number. Leave blank lines for entries where a field does not apply.</div>
+
+    <div class="secHeader">FIDE ID CHECK</div>
+    <div class="qRow">
+      <div class="qLabel">Do you have FIDE IDs for these entries?</div>
+      <div class="radioGroup">
+        <label><input type="radio" name="bulkHasFide" value="yes" onchange="onBulkFideChoice('yes')"/> YES — entries have FIDE IDs</label>
+        <label><input type="radio" name="bulkHasFide" value="no" onchange="onBulkFideChoice('no')"/> NO — no FIDE IDs</label>
+      </div>
+    </div>
+
+    <div id="bulkMainForm" class="hidden">
+
+      <div id="bulkFideRow" class="hidden">
+        <div class="secHeader">Q1. FIDE IDs</div>
+        <div class="qRow">
+          <div class="qLabel">FIDE IDs (one per line, digits only)</div>
+          <textarea id="b_fideId" class="qTextarea" placeholder="123456789&#10;234567890&#10;..."></textarea>
+        </div>
+      </div>
+
+      <div class="secHeader">ID SECTION</div>
+      <div class="qRow">
+        <div class="qLabel">Q2. AICF IDs (one per line)</div>
+        <textarea id="b_aicfId" class="qTextarea" placeholder="AICF001&#10;AICF002&#10;..."></textarea>
+      </div>
+      <div class="qRow">
+        <div class="qLabel">Q3. LICHESS IDs (one per line)</div>
+        <textarea id="b_lichessId" class="qTextarea" placeholder="lichess_user1&#10;lichess_user2&#10;..."></textarea>
+      </div>
+      <div class="qRow">
+        <div class="qLabel">Q4. CHESS.COM IDs (one per line)</div>
+        <textarea id="b_chesscomId" class="qTextarea" placeholder="chesscom_user1&#10;..."></textarea>
+      </div>
+
+      <div class="secHeader">PERSONAL DETAILS</div>
+      <div class="qRow">
+        <div class="qLabel">Q5. Names (one per line, auto UPPERCASE) <span class="req" id="bulkNameReq">*</span></div>
+        <textarea id="b_name" class="qTextarea" placeholder="JOHN DOE&#10;JANE SMITH&#10;..."></textarea>
+      </div>
+      <div class="qRow">
+        <div class="qLabel">Q6. Dates of Birth (DD/MM/YYYY, one per line)</div>
+        <textarea id="b_dob" class="qTextarea" placeholder="01/01/2000&#10;15/06/1995&#10;..."></textarea>
+      </div>
+      <div class="qRow">
+        <div class="qLabel">Q7. Birth Years (YYYY, one per line)</div>
+        <textarea id="b_birthYear" class="qTextarea" placeholder="2000&#10;1995&#10;..."></textarea>
+      </div>
+      <div class="qRow">
+        <div class="qLabel">Q8. Gender (MALE/FEMALE, one per line)</div>
+        <textarea id="b_gender" class="qTextarea" placeholder="MALE&#10;FEMALE&#10;..."></textarea>
+      </div>
+      <div class="qRow">
+        <div class="qLabel">Q9. Contact Nos (10 digits, one per line)</div>
+        <textarea id="b_contactNo" class="qTextarea" placeholder="9876543210&#10;9876543211&#10;..."></textarea>
+      </div>
+      <div class="qRow">
+        <div class="qLabel">Q10. WhatsApp Nos (10 digits or SAME, one per line)</div>
+        <textarea id="b_whatsappNo" class="qTextarea" placeholder="SAME&#10;9876543211&#10;..."></textarea>
+      </div>
+      <div class="qRow">
+        <div class="qLabel">Q11. Emails (one per line)</div>
+        <textarea id="b_email" class="qTextarea" placeholder="user1@email.com&#10;user2@email.com&#10;..."></textarea>
+      </div>
+      <div class="qRow">
+        <div class="qLabel">Q12. Countries (one per line, default India)</div>
+        <textarea id="b_country" class="qTextarea" placeholder="India&#10;India&#10;..."></textarea>
+      </div>
+      <div class="qRow">
+        <div class="qLabel">Q13. States (one per line, default Gujarat)</div>
+        <textarea id="b_state" class="qTextarea" placeholder="Gujarat&#10;Maharashtra&#10;..."></textarea>
+      </div>
+      <div class="qRow">
+        <div class="qLabel">Q14. Districts (one per line)</div>
+        <textarea id="b_district" class="qTextarea" placeholder="Surat&#10;Mumbai&#10;..."></textarea>
+      </div>
+      <div class="qRow">
+        <div class="qLabel">Q15. Cities / Talukas (one per line, auto UPPERCASE)</div>
+        <textarea id="b_city" class="qTextarea" placeholder="SURAT CITY&#10;ANDHERI&#10;..."></textarea>
+      </div>
+      <div class="qRow">
+        <div class="qLabel">Q16. PIN Codes (6 digits, one per line)</div>
+        <textarea id="b_postalCode" class="qTextarea" placeholder="395001&#10;400001&#10;..."></textarea>
+      </div>
+
+      <div id="bulkFideRatingsSection">
+        <div class="secHeader">FIDE RATINGS &amp; TITLES</div>
+        <div class="qRow">
+          <div class="qLabel">Q17. Standard Ratings (4 digits, one per line)</div>
+          <textarea id="b_stdRating" class="qTextarea" placeholder="1850&#10;2100&#10;..."></textarea>
+        </div>
+        <div class="qRow">
+          <div class="qLabel">Q18. Rapid Ratings (4 digits, one per line)</div>
+          <textarea id="b_rapidRating" class="qTextarea" placeholder="1750&#10;2000&#10;..."></textarea>
+        </div>
+        <div class="qRow">
+          <div class="qLabel">Q19. Blitz Ratings (4 digits, one per line)</div>
+          <textarea id="b_blitzRating" class="qTextarea" placeholder="1700&#10;1950&#10;..."></textarea>
+        </div>
+        <div class="qRow">
+          <div class="qLabel">Q20. FIDE Player Titles (GM/IM/FM/CM/WGM/WIM/WFM/WCM, one per line)</div>
+          <textarea id="b_title" class="qTextarea" placeholder="GM&#10;IM&#10;..."></textarea>
+        </div>
+        <div class="qRow">
+          <div class="qLabel">Q21. FIDE Trainer Titles (DI/NI/FI/FT/FST, one per line)</div>
+          <textarea id="b_trainerTitle" class="qTextarea" placeholder="FT&#10;NI&#10;..."></textarea>
+        </div>
+        <div class="qRow">
+          <div class="qLabel">Q22. FIDE Arbiter Titles (NA/FA/IA, one per line)</div>
+          <textarea id="b_arbiterTitle" class="qTextarea" placeholder="FA&#10;IA&#10;..."></textarea>
+        </div>
+        <div class="qRow">
+          <div class="qLabel">Q23. FOA Titles (AGM/AIM/AFM/ACM, one per line)</div>
+          <textarea id="b_arenaTitle" class="qTextarea" placeholder="AGM&#10;AIM&#10;..."></textarea>
+        </div>
+      </div>
+
+      <div class="secHeader">MEMBERSHIP</div>
+      <div class="qRow">
+        <div class="qLabel">Q24. Membership Status (Active/Inactive, one per line)</div>
+        <textarea id="b_membershipStatus" class="qTextarea" placeholder="Active&#10;Inactive&#10;..."></textarea>
+      </div>
+      <div class="qRow">
+        <div class="qLabel">Q25. Membership Type (Platinum/Gold, one per line — only for Active)</div>
+        <textarea id="b_membershipType" class="qTextarea" placeholder="Gold&#10;Platinum&#10;..."></textarea>
+      </div>
+
+      <div class="secHeader">CHESSX IP PINs</div>
+      <div class="qRow">
+        <div class="qLabel">Q42. IP PINs (exactly 6 digits each, one per line)</div>
+        <textarea id="b_ipPin" class="qTextarea" placeholder="123456&#10;654321&#10;..."></textarea>
+      </div>
+      <div class="qRow">
+        <div class="qLabel">Confirm IP PINs (one per line, must match above)</div>
+        <textarea id="b_ipPin2" class="qTextarea" placeholder="123456&#10;654321&#10;..."></textarea>
+      </div>
+
+      <div class="alertBox error" id="bulkFormErr" style="margin-top:8px;"></div>
+      <button class="regBtn" onclick="registerBulk()">🏁 BULK REGISTER</button>
+    </div>
+  </div>
+
+</div><!-- /mainApp -->
+
+<script type="module">
+// ════════════════════════════════════════════
+// FIREBASE SETUP
+// ════════════════════════════════════════════
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, query, where, getDocs, addDoc, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBApKwOIjF4pk0PJZBJo7GM8a7a8ECRIxU",
+  authDomain: "chessx-4e0ec.firebaseapp.com",
+  projectId: "chessx-4e0ec",
+  storageBucket: "chessx-4e0ec.firebasestorage.app",
+  messagingSenderId: "888357289080",
+  appId: "1:888357289080:web:5ecdf9890bf09408eac18d",
+  measurementId: "G-XBRF1H45K8"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+// ════════════════════════════════════════════
+// LOGO (base64 from uploaded image)
+// ════════════════════════════════════════════
+const LOGO_URL = "https://chessigo.github.io/ChessX/chessx-logo.png";
+
+function setLogos(){
+  ['loginLogo','welcomeLogo','headerLogo','regAnimLogo','successLogo'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.src = LOGO_URL;
+  });
+}
+setLogos();
+
+// ════════════════════════════════════════════
+// GLOBAL STATE
+// ════════════════════════════════════════════
+let loggedInAdmin = "";
+let currentMode   = "";   // 'single' | 'bulk'
+let hasFide       = null; // true | false (single)
+let fideChecked   = false;
+let lastSuccess   = null; // for modal
+
+// ════════════════════════════════════════════
+// DATA LISTS
+// ════════════════════════════════════════════
+const countries = ["India"];
+const indianStates = ["Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh","Goa","Gujarat","Haryana","Himachal Pradesh","Jammu and Kashmir","Jharkhand","Karnataka","Kerala","Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram","Nagaland","Orissa","Punjab","Rajasthan","Sikkim","Tamil Nadu","Tripura","Uttarakhand","Uttar Pradesh","West Bengal","Andaman and Nicobar Islands","Chandigarh","Dadra and Nagar Haveli","Daman and Diu","Delhi","Lakshadweep","Pondicherry"];
+const gujaratDistricts = ["Ahmedabad","Amreli","Anand","Aravalli","Banaskantha","Bharuch","Bhavnagar","Botad","Chhota Udaipur","Dahod","Dang","Devbhumi Dwarka","Gandhinagar","Gir Somnath","Jamnagar","Junagadh","Kheda","Kachchh","Mahisagar","Mehsana","Morbi","Narmada","Navsari","Panchmahal","Patan","Porbandar","Rajkot","Sabarkantha","Surat","Surendranagar","Tapi","Vadodara","Valsad","Vav-Tharad"];
+const countryMeta = { "India": { code: "+91", tz: "Asia/Kolkata (IST, UTC+5:30)" } };
+
+// expose to global for inline handlers
+window.countries = countries;
+window.indianStates = indianStates;
+window.gujaratDistricts = gujaratDistricts;
+
+// ════════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════════
+function pad2(n){ return String(n).padStart(2,'0'); }
+function todayDMY(){
+  const d = new Date();
+  return `${pad2(d.getDate())}/${pad2(d.getMonth()+1)}/${d.getFullYear()}`;
+}
+function nowHHMM(){
+  const d = new Date();
+  return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+function getTodayDDMMYYYY(){
+  const d = new Date();
+  return `${pad2(d.getDate())}${pad2(d.getMonth()+1)}${d.getFullYear()}`;
+}
+function calcMembershipEndDate(startDMY){
+  // accounting year ends 31 March
+  const [dd,mm,yyyy] = startDMY.split('/').map(Number);
+  const year = (mm > 3) ? yyyy+1 : yyyy; // if after March, end next year
+  return `31/03/${year}`;
+}
+
+// ════════════════════════════════════════════
+// LOGIN
+// ════════════════════════════════════════════
+window.doLogin = async function(){
+  const adminId  = document.getElementById('adminIdInput').value.trim().toUpperCase();
+  const adminPin = document.getElementById('adminPinInput').value.trim();
+  const errEl    = document.getElementById('loginErr');
+  errEl.textContent = '';
+
+  if(!adminId){ errEl.textContent = '⚠️ Please enter Admin ID.'; return; }
+  if(!/^\d{6}$/.test(adminPin)){ errEl.textContent = '⚠️ Admin PIN must be exactly 6 digits.'; return; }
+
+  try {
+    const docRef = collection(db,'adminpwddb');
+    const snap   = await getDocs(query(docRef, where('adminId','==',adminId), where('adminPin','==',adminPin)));
+    if(snap.empty){
+      errEl.textContent = '❌ Invalid Admin ID or PIN.';
+      return;
+    }
+    // Success
+    loggedInAdmin = adminId;
+    showWelcome(adminId);
+  } catch(e){
+    errEl.textContent = '❌ Error: ' + e.message;
+  }
+};
+
+function showWelcome(adminId){
+  document.getElementById('loginOverlay').style.display  = 'none';
+  const wo = document.getElementById('welcomeOverlay');
+  document.getElementById('welcomeMsg').textContent = `WELCOME, ${adminId}`;
+  wo.style.display = 'flex';
+  setTimeout(()=>{
+    wo.style.display = 'none';
+    showMainApp(adminId);
+  }, 5000);
+}
+
+function showMainApp(adminId){
+  document.getElementById('mainApp').style.display = 'block';
+  document.getElementById('headerAdminBadge').textContent = '👤 ' + adminId;
+  // pre-fill auto fields
+  document.getElementById('s_enteredBy').value  = adminId;
+  document.getElementById('s_dateofEntry').value = todayDMY();
+}
+
+// ════════════════════════════════════════════
+// MODE
+// ════════════════════════════════════════════
+window.setMode = function(mode){
+  currentMode = mode;
+  document.getElementById('singleForm').style.display = mode==='single' ? 'block' : 'none';
+  document.getElementById('bulkForm').style.display   = mode==='bulk'   ? 'block' : 'none';
+  document.getElementById('btnSingle').classList.toggle('active', mode==='single');
+  document.getElementById('btnBulk').classList.toggle('active',   mode==='bulk');
+};
+
+// ════════════════════════════════════════════
+// FIDE CHOICE (SINGLE)
+// ════════════════════════════════════════════
+window.onFideChoice = function(val){
+  hasFide = (val === 'yes');
+  fideChecked = false;
+  document.getElementById('fideYesBlock').classList.toggle('hidden', !hasFide);
+  document.getElementById('fideNoBlock').classList.toggle('hidden',  hasFide);
+  document.getElementById('singleMainForm').classList.add('hidden');
+  document.getElementById('fideDupAlert').style.display = 'none';
+  document.getElementById('fideOkAlert').style.display  = 'none';
+
+  if(!hasFide){
+    // show form immediately
+    showSingleForm(false);
+  }
+};
+
+window.checkFideInDB = async function(){
+  const fideVal = document.getElementById('s_fideId').value.trim();
+  if(!fideVal){ alert('Please enter a FIDE ID.'); return; }
+  const dup = document.getElementById('fideDupAlert');
+  const ok  = document.getElementById('fideOkAlert');
+  dup.style.display = 'none';
+  ok.style.display  = 'none';
+  try {
+    const q    = query(collection(db,'ipdbchessX'), where('fideId','==',fideVal));
+    const snap = await getDocs(q);
+    if(!snap.empty){
+      dup.style.display = 'block';
+      fideChecked = false;
+    } else {
+      ok.style.display  = 'block';
+      fideChecked = true;
+      showSingleForm(true);
+    }
+  } catch(e){
+    alert('Error checking database: ' + e.message);
+  }
+};
+
+function showSingleForm(withFide){
+  const form = document.getElementById('singleMainForm');
+  form.classList.remove('hidden');
+  // Show/hide FIDE ratings section
+  document.getElementById('fideRatingsSection').classList.toggle('hidden', !withFide);
+  // Name mandatory for NO fide
+  document.getElementById('nameReq').textContent = withFide ? '' : '*';
+  // Hide FIDE-specific auto fields for NO
+  ['row_s_fideTrainer','row_s_fideArbiter','row_s_foa','row_s_tittlePlayer'].forEach(id=>{
+    document.getElementById(id).classList.toggle('hidden', !withFide);
+  });
+  updateAutoFields();
+  // update ipId
+  updateSingleIpId();
+}
+
+// ════════════════════════════════════════════
+// BULK FIDE CHOICE
+// ════════════════════════════════════════════
+window.onBulkFideChoice = function(val){
+  const hasBulkFide = (val === 'yes');
+  document.getElementById('bulkMainForm').classList.remove('hidden');
+  document.getElementById('bulkFideRow').classList.toggle('hidden', !hasBulkFide);
+  document.getElementById('bulkFideRatingsSection').classList.toggle('hidden', !hasBulkFide);
+  document.getElementById('bulkNameReq').textContent = hasBulkFide ? '' : '*';
+};
+
+// ════════════════════════════════════════════
+// DOB FORMAT (auto slash)
+// ════════════════════════════════════════════
+window.formatDOB = function(el){
+  let v = el.value.replace(/\D/g,'');
+  if(v.length > 8) v = v.slice(0,8);
+  if(v.length > 4) v = v.slice(0,2)+'/'+v.slice(2,4)+'/'+v.slice(4);
+  else if(v.length > 2) v = v.slice(0,2)+'/'+v.slice(2);
+  el.value = v;
+  // auto-fill birth year
+  if(v.length === 10){
+    const yr = v.slice(6,10);
+    document.getElementById('s_birthYear').value = yr;
+  } else if(v.length < 10){
+    // only clear if user is still typing
+  }
+};
+
+// ════════════════════════════════════════════
+// WHATSAPP SAME CHECKBOX
+// ════════════════════════════════════════════
+window.toggleWA = function(){
+  const checked = document.getElementById('s_waCheck').checked;
+  const waEl    = document.getElementById('s_whatsappNo');
+  if(checked){
+    waEl.value    = document.getElementById('s_contactNo').value;
+    waEl.disabled = true;
+  } else {
+    waEl.disabled = false;
+    waEl.value    = '';
+  }
+};
+
+// ════════════════════════════════════════════
+// SEARCHABLE DROPDOWN
+// ════════════════════════════════════════════
+function renderList(listId, items, inputId, onSelect){
+  const listEl = document.getElementById(listId);
+  listEl.innerHTML = '';
+  items.slice(0,30).forEach(item=>{
+    const div = document.createElement('div');
+    div.className = 'dropItem';
+    div.textContent = item;
+    div.onmousedown = ()=>{ document.getElementById(inputId).value = item; if(onSelect) onSelect(item); };
+    listEl.appendChild(div);
+  });
+}
+
+window.filterDrop = function(dropId, inputId, allItems){
+  const val   = document.getElementById(inputId).value.toLowerCase();
+  const items = allItems.filter(i=>i.toLowerCase().includes(val));
+  renderList(dropId+'List', items, inputId, ()=>{
+    document.getElementById(dropId+'List').classList.remove('open');
+    if(inputId === 's_country') onCountryChange();
+    if(inputId === 's_state')   onStateChange();
+  });
+  document.getElementById(dropId+'List').classList.add('open');
+};
+
+window.openDrop = function(dropId, inputId, allItems){
+  renderList(dropId+'List', allItems, inputId, ()=>{
+    document.getElementById(dropId+'List').classList.remove('open');
+    if(inputId === 's_country') onCountryChange();
+    if(inputId === 's_state')   onStateChange();
+  });
+  document.getElementById(dropId+'List').classList.add('open');
+};
+
+window.blurDrop = function(dropId){
+  setTimeout(()=>{ document.getElementById(dropId+'List').classList.remove('open'); }, 200);
+};
+
+// District
+window.filterDistrict = function(){
+  const state = document.getElementById('s_state').value;
+  const val   = document.getElementById('s_district').value.toLowerCase();
+  const list  = state === 'Gujarat' ? gujaratDistricts.filter(d=>d.toLowerCase().includes(val)) : [];
+  renderList('districtDropList', list, 's_district', ()=>{ document.getElementById('districtDropList').classList.remove('open'); });
+  document.getElementById('districtDropList').classList.add('open');
+};
+
+window.openDistrictDrop = function(){
+  const state = document.getElementById('s_state').value;
+  const list  = state === 'Gujarat' ? gujaratDistricts : [];
+  renderList('districtDropList', list, 's_district', ()=>{ document.getElementById('districtDropList').classList.remove('open'); });
+  document.getElementById('districtDropList').classList.add('open');
+};
+
+function onCountryChange(){
+  const country = document.getElementById('s_country').value;
+  const meta    = countryMeta[country] || {};
+  document.getElementById('s_countryCode').value = meta.code || '';
+  document.getElementById('s_timeZone').value    = meta.tz   || '';
+  const isIndia = country === 'India';
+  document.getElementById('stateRow').classList.toggle('hidden',   !isIndia);
+  document.getElementById('districtRow').classList.toggle('hidden', !isIndia);
+}
+
+function onStateChange(){
+  document.getElementById('s_district').value = '';
+}
+
+// ════════════════════════════════════════════
+// MEMBERSHIP
+// ════════════════════════════════════════════
+window.onMembershipChange = function(val){
+  const active = (val === 'Active');
+  document.getElementById('s_membershipType').disabled        = !active;
+  document.getElementById('s_membershipstartDate').disabled   = !active;
+  document.getElementById('s_membershipendDate').disabled     = !active;
+  if(active){
+    const today = todayDMY();
+    document.getElementById('s_membershipstartDate').value = today;
+    document.getElementById('s_membershipendDate').value   = calcMembershipEndDate(today);
+  } else {
+    document.getElementById('s_membershipstartDate').value = '';
+    document.getElementById('s_membershipendDate').value   = '';
+    document.getElementById('s_membershipType').value      = '';
+  }
+};
+
+// ════════════════════════════════════════════
+// AUTO FIELDS (single)
+// ════════════════════════════════════════════
+window.updateAutoFields = function(){
+  const title       = document.getElementById('s_title')?.value        || '';
+  const trainerTtl  = document.getElementById('s_trainerTitle')?.value || '';
+  const arbiterTtl  = document.getElementById('s_arbiterTitle')?.value || '';
+  const arenaTtl    = document.getElementById('s_arenaTitle')?.value   || '';
+  const std         = document.getElementById('s_stdRating')?.value    || '';
+  const rapid       = document.getElementById('s_rapidRating')?.value  || '';
+  const blitz       = document.getElementById('s_blitzRating')?.value  || '';
+
+  const rated = (title !== '' || std !== '' || rapid !== '' || blitz !== '') ? 'YES' : 'NO';
+  document.getElementById('s_ratedPlayer').value   = rated;
+
+  if(document.getElementById('s_fideTrainer'))
+    document.getElementById('s_fideTrainer').value   = trainerTtl !== '' ? 'YES' : 'NO';
+  if(document.getElementById('s_fideArbiter'))
+    document.getElementById('s_fideArbiter').value   = arbiterTtl !== '' ? 'YES' : 'NO';
+  if(document.getElementById('s_foa'))
+    document.getElementById('s_foa').value           = arenaTtl   !== '' ? 'YES' : 'NO';
+  if(document.getElementById('s_tittlePlayer'))
+    document.getElementById('s_tittlePlayer').value  = title       !== '' ? 'YES' : 'NO';
+};
+
+// ════════════════════════════════════════════
+// IP ID GENERATION (single NO FIDE)
+// ════════════════════════════════════════════
+async function generateNoFideIpId(){
+  const ddmmyyyy = getTodayDDMMYYYY();
+  const prefix   = `IP${ddmmyyyy}`;
+  try {
+    const q    = query(collection(db,'ipdbchessX'), where('ipId','>=',prefix), where('ipId','<',prefix+'z'), orderBy('ipId','desc'), limit(1));
+    const snap = await getDocs(q);
+    let n = 0;
+    if(!snap.empty){
+      const lastId = snap.docs[0].data().ipId;
+      const numStr = lastId.replace(prefix,'');
+      n = parseInt(numStr)||0;
+    }
+    return prefix + (n+1);
+  } catch(e){
+    return prefix + '1';
+  }
+}
+
+window.updateSingleIpId = async function(){
+  if(hasFide){
+    const fideVal = document.getElementById('s_fideId').value.trim();
+    document.getElementById('s_ipId').value = fideVal || '(enter FIDE ID)';
+  } else {
+    const ipId = await generateNoFideIpId();
+    document.getElementById('s_ipId').value = ipId;
+  }
+};
+
+// ════════════════════════════════════════════
+// VALIDATE SINGLE
+// ════════════════════════════════════════════
+function validateSingle(){
+  const errEl = document.getElementById('singleFormErr');
+  errEl.style.display = 'none';
+
+  // FIDE check
+  if(hasFide){
+    if(!fideChecked){
+      errEl.textContent = '⚠️ Please check FIDE ID in the database first.';
+      errEl.style.display = 'block'; return false;
+    }
+    const fideVal = document.getElementById('s_fideId').value.trim();
+    if(!fideVal){ errEl.textContent = '⚠️ FIDE ID is required.'; errEl.style.display = 'block'; return false; }
+  } else {
+    const name = document.getElementById('s_name').value.trim();
+    if(!name){ errEl.textContent = '⚠️ Name is mandatory when no FIDE ID.'; errEl.style.display = 'block'; return false; }
+  }
+
+  // PIN validation
+  const pin1 = document.getElementById('s_ipPin1').value;
+  const pin2 = document.getElementById('s_ipPin2').value;
+  if(pin1 && !/^\d{6}$/.test(pin1)){ errEl.textContent = '⚠️ IP PIN must be exactly 6 digits.'; errEl.style.display = 'block'; return false; }
+  if(pin1 && pin1 !== pin2){ errEl.textContent = '⚠️ IP PINs do not match.'; errEl.style.display = 'block'; return false; }
+
+  return true;
+}
+
+// ════════════════════════════════════════════
+// REGISTER SINGLE
+// ════════════════════════════════════════════
+window.registerSingle = async function(){
+  if(!validateSingle()) return;
+
+  // Time of Entry
+  document.getElementById('s_timeofEntry').value = nowHHMM();
+
+  // Show animation
+  document.getElementById('regAnim').style.display = 'flex';
+  await new Promise(r=>setTimeout(r,5000));
+  document.getElementById('regAnim').style.display = 'none';
+
+  try {
+    const ipId = hasFide
+      ? document.getElementById('s_fideId').value.trim()
+      : await generateNoFideIpId();
+
+    const country = document.getElementById('s_country').value.trim();
+    const meta    = countryMeta[country]||{};
+
+    const title      = document.getElementById('s_title')?.value        || '';
+    const trainerTtl = document.getElementById('s_trainerTitle')?.value || '';
+    const arbiterTtl = document.getElementById('s_arbiterTitle')?.value || '';
+    const arenaTtl   = document.getElementById('s_arenaTitle')?.value   || '';
+    const std        = document.getElementById('s_stdRating')?.value    || '';
+    const rapid      = document.getElementById('s_rapidRating')?.value  || '';
+    const blitz      = document.getElementById('s_blitzRating')?.value  || '';
+
+    const record = {
+      fideId:              hasFide ? document.getElementById('s_fideId').value.trim() : '',
+      aicfId:              document.getElementById('s_aicfId').value.trim(),
+      lichessId:           document.getElementById('s_lichessId').value.trim(),
+      chesscomId:          document.getElementById('s_chesscomId').value.trim(),
+      name:                document.getElementById('s_name').value.trim().toUpperCase(),
+      dateofBirth:         document.getElementById('s_dob').value.trim(),
+      birthYear:           document.getElementById('s_birthYear').value.trim(),
+      gender:              document.getElementById('s_gender').value,
+      contactNo:           document.getElementById('s_contactNo').value.trim(),
+      WhatsAppNo:          document.getElementById('s_whatsappNo').value.trim(),
+      email:               document.getElementById('s_email').value.trim(),
+      country:             country,
+      state:               document.getElementById('s_state').value.trim(),
+      district:            document.getElementById('s_district').value.trim(),
+      city:                document.getElementById('s_city').value.trim().toUpperCase(),
+      postalCode:          document.getElementById('s_postalCode').value.trim(),
+      stdRating:           std,
+      rapidRating:         rapid,
+      blitzRating:         blitz,
+      title:               title,
+      trainerTitle:        trainerTtl,
+      arbiterTitle:        arbiterTtl,
+      arenaTitle:          arenaTtl,
+      membershipStatus:    document.querySelector('input[name="s_membershipStatus"]:checked')?.value || '',
+      membershipType:      document.getElementById('s_membershipType').value,
+      membershipstartDate: document.getElementById('s_membershipstartDate').value,
+      membershipendDate:   document.getElementById('s_membershipendDate').value,
+      profilephotoURL:     '',
+      ratedPlayer:         hasFide ? ((title||std||rapid||blitz) ? 'YES':'NO') : 'NO',
+      fideTrainer:         hasFide ? (trainerTtl ? 'YES':'NO') : 'NO',
+      fideArbiter:         hasFide ? (arbiterTtl ? 'YES':'NO') : 'NO',
+      foa:                 hasFide ? (arenaTtl   ? 'YES':'NO') : 'NO',
+      tittlePlayer:        hasFide ? (title       ? 'YES':'NO') : 'NO',
+      countrycontactnoCode: meta.code||'',
+      tineZone:            meta.tz  ||'',
+      enteredBy:           loggedInAdmin,
+      dateofEntry:         todayDMY(),
+      timeofEntry:         nowHHMM(),
+      editedBy:            '',
+      dateofeditEntry:     '',
+      timeofeditEntry:     '',
+      ipPin:               document.getElementById('s_ipPin1').value,
+      ipId:                ipId,
+      status:              'Active'
+    };
+
+    await addDoc(collection(db,'ipdbchessX'), record);
+
+    lastSuccess = {
+      name:  record.name,
+      ipId:  ipId,
+      ipPin: record.ipPin,
+      withFide: hasFide
+    };
+    showSuccessModal();
+
+  } catch(e){
+    const errEl = document.getElementById('singleFormErr');
+    errEl.textContent = '❌ Registration failed: ' + e.message;
+    errEl.style.display = 'block';
+  }
+};
+
+// ════════════════════════════════════════════
+// REGISTER BULK
+// ════════════════════════════════════════════
+window.registerBulk = async function(){
+  const errEl = document.getElementById('bulkFormErr');
+  errEl.style.display = 'none';
+
+  const hasBulkFide = document.querySelector('input[name="bulkHasFide"]:checked')?.value === 'yes';
+  const getLines = id => {
+    const ta = document.getElementById(id);
+    if(!ta) return [];
+    return ta.value.split('\n').map(l=>l.trim());
+  };
+
+  const names     = getLines('b_name');
+  const fideIds   = hasBulkFide ? getLines('b_fideId') : [];
+  const count     = Math.max(names.length, hasBulkFide ? fideIds.length : 0);
+
+  if(count === 0){ errEl.textContent = '⚠️ Please enter at least one entry.'; errEl.style.display = 'block'; return; }
+  if(count > 100){ errEl.textContent = '⚠️ Maximum 100 entries allowed.'; errEl.style.display = 'block'; return; }
+
+  // PIN validation
+  const pins1 = getLines('b_ipPin');
+  const pins2 = getLines('b_ipPin2');
+  for(let i=0;i<Math.max(pins1.length,pins2.length);i++){
+    const p1 = pins1[i]||'';
+    const p2 = pins2[i]||'';
+    if(p1 && !/^\d{6}$/.test(p1)){ errEl.textContent = `⚠️ Row ${i+1}: IP PIN must be exactly 6 digits.`; errEl.style.display = 'block'; return; }
+    if(p1 && p1!==p2){ errEl.textContent = `⚠️ Row ${i+1}: IP PINs do not match.`; errEl.style.display = 'block'; return; }
+  }
+
+  // Name mandatory if no fide
+  if(!hasBulkFide){
+    for(let i=0;i<count;i++){
+      if(!names[i]){ errEl.textContent = `⚠️ Row ${i+1}: Name is mandatory (no FIDE ID).`; errEl.style.display = 'block'; return; }
+    }
+  }
+
+  document.getElementById('regAnim').style.display = 'flex';
+  await new Promise(r=>setTimeout(r,5000));
+  document.getElementById('regAnim').style.display = 'none';
+
+  const aicfIds     = getLines('b_aicfId');
+  const lichessIds  = getLines('b_lichessId');
+  const chesscomIds = getLines('b_chesscomId');
+  const dobs        = getLines('b_dob');
+  const birthYears  = getLines('b_birthYear');
+  const genders     = getLines('b_gender');
+  const contacts    = getLines('b_contactNo');
+  const whatsapps   = getLines('b_whatsappNo');
+  const emails      = getLines('b_email');
+  const bCountries  = getLines('b_country');
+  const states      = getLines('b_state');
+  const districts   = getLines('b_district');
+  const cities      = getLines('b_city');
+  const postals     = getLines('b_postalCode');
+  const stdRatings  = getLines('b_stdRating');
+  const rapidRatings= getLines('b_rapidRating');
+  const blitzRatings= getLines('b_blitzRating');
+  const titles      = getLines('b_title');
+  const trainerTtls = getLines('b_trainerTitle');
+  const arbiterTtls = getLines('b_arbiterTitle');
+  const arenaTtls   = getLines('b_arenaTitle');
+  const memStatuses = getLines('b_membershipStatus');
+  const memTypes    = getLines('b_membershipType');
+
+  let successCount = 0;
+  let failCount    = 0;
+  const today      = todayDMY();
+  const timeNow    = nowHHMM();
+  const ddmmyyyy   = getTodayDDMMYYYY();
+
+  // get current count for no-fide IDs
+  let noFideCounter = 0;
+  if(!hasBulkFide){
+    try{
+      const prefix = `IP${ddmmyyyy}`;
+      const q = query(collection(db,'ipdbchessX'), where('ipId','>=',prefix), where('ipId','<',prefix+'z'), orderBy('ipId','desc'), limit(1));
+      const snap = await getDocs(q);
+      if(!snap.empty){
+        const lastId = snap.docs[0].data().ipId;
+        noFideCounter = parseInt(lastId.replace(prefix,''))||0;
+      }
+    } catch(e){}
+  }
+
+  for(let i=0;i<count;i++){
+    const cntry  = bCountries[i]||'India';
+    const meta   = countryMeta[cntry]||{};
+    const fideId = hasBulkFide ? (fideIds[i]||'') : '';
+    const title  = hasBulkFide ? (titles[i]||'')  : '';
+    const trT    = hasBulkFide ? (trainerTtls[i]||'')  : '';
+    const arT    = hasBulkFide ? (arbiterTtls[i]||'')  : '';
+    const aT     = hasBulkFide ? (arenaTtls[i]||'')    : '';
+    const std    = hasBulkFide ? (stdRatings[i]||'')   : '';
+    const rapid  = hasBulkFide ? (rapidRatings[i]||'') : '';
+    const blitz  = hasBulkFide ? (blitzRatings[i]||'') : '';
+
+    let ipId;
+    if(hasBulkFide){
+      ipId = fideId;
+    } else {
+      noFideCounter++;
+      ipId = `IP${ddmmyyyy}${noFideCounter}`;
+    }
+
+    const wa = (whatsapps[i]||'').toUpperCase() === 'SAME' ? (contacts[i]||'') : (whatsapps[i]||'');
+
+    const memStatus = memStatuses[i]||'';
+    const memStart  = memStatus==='Active' ? today : '';
+    const memEnd    = memStatus==='Active' ? calcMembershipEndDate(today) : '';
+
+    const record = {
+      fideId:              fideId,
+      aicfId:              (aicfIds[i]||'').toUpperCase(),
+      lichessId:           lichessIds[i]||'',
+      chesscomId:          chesscomIds[i]||'',
+      name:                (names[i]||'').toUpperCase(),
+      dateofBirth:         dobs[i]||'',
+      birthYear:           birthYears[i]||'',
+      gender:              (genders[i]||'').toUpperCase(),
+      contactNo:           contacts[i]||'',
+      WhatsAppNo:          wa,
+      email:               emails[i]||'',
+      country:             cntry,
+      state:               states[i]||'Gujarat',
+      district:            districts[i]||'',
+      city:                (cities[i]||'').toUpperCase(),
+      postalCode:          postals[i]||'',
+      stdRating:           std,
+      rapidRating:         rapid,
+      blitzRating:         blitz,
+      title:               title,
+      trainerTitle:        trT,
+      arbiterTitle:        arT,
+      arenaTitle:          aT,
+      membershipStatus:    memStatus,
+      membershipType:      memTypes[i]||'',
+      membershipstartDate: memStart,
+      membershipendDate:   memEnd,
+      profilephotoURL:     '',
+      ratedPlayer:         hasBulkFide ? ((title||std||rapid||blitz)?'YES':'NO') : 'NO',
+      fideTrainer:         hasBulkFide ? (trT?'YES':'NO') : 'NO',
+      fideArbiter:         hasBulkFide ? (arT?'YES':'NO') : 'NO',
+      foa:                 hasBulkFide ? (aT ?'YES':'NO') : 'NO',
+      tittlePlayer:        hasBulkFide ? (title?'YES':'NO') : 'NO',
+      countrycontactnoCode: meta.code||'',
+      tineZone:            meta.tz||'',
+      enteredBy:           loggedInAdmin,
+      dateofEntry:         today,
+      timeofEntry:         timeNow,
+      editedBy:            '',
+      dateofeditEntry:     '',
+      timeofeditEntry:     '',
+      ipPin:               pins1[i]||'',
+      ipId:                ipId,
+      status:              'Active'
+    };
+
+    try {
+      await addDoc(collection(db,'ipdbchessX'), record);
+      successCount++;
+    } catch(e){
+      failCount++;
+    }
+  }
+
+  lastSuccess = { bulk: true, successCount, failCount };
+  showSuccessModal();
+};
+
+// ════════════════════════════════════════════
+// SUCCESS MODAL
+// ════════════════════════════════════════════
+function showSuccessModal(){
+  const modal  = document.getElementById('successModal');
+  const detail = document.getElementById('successDetail');
+  modal.style.display = 'flex';
+
+  if(lastSuccess.bulk){
+    detail.innerHTML = `
+      <p>✅ <strong>${lastSuccess.successCount}</strong> records registered successfully.</p>
+      ${lastSuccess.failCount > 0 ? `<p style="color:red;">❌ ${lastSuccess.failCount} records failed.</p>` : ''}
+    `;
+  } else {
+    detail.innerHTML = `
+      ${lastSuccess.name ? `<p>👤 Name: <strong>${lastSuccess.name}</strong></p>` : ''}
+      <p>🆔 ChessX IP ID: <strong>${lastSuccess.ipId}</strong></p>
+      <p>🔑 ChessX IP PIN: <strong>${lastSuccess.ipPin||'(not set)'}</strong></p>
+    `;
+  }
+}
+
+window.copySuccessDetails = function(){
+  let text = 'ChessX IP Registration Details\n';
+  if(lastSuccess){
+    if(lastSuccess.bulk){
+      text += `Registered: ${lastSuccess.successCount} records`;
+    } else {
+      if(lastSuccess.name) text += `Name: ${lastSuccess.name}\n`;
+      text += `ChessX IP ID: ${lastSuccess.ipId}\n`;
+      text += `ChessX IP PIN: ${lastSuccess.ipPin||'(not set)'}`;
+    }
+  }
+  navigator.clipboard.writeText(text).then(()=>alert('✅ Details copied to clipboard!'));
+};
+
+window.registerAnother = function(){
+  document.getElementById('successModal').style.display = 'none';
+  resetSingleForm();
+};
+
+window.goToIPDB = function(){
+  window.open('https://chessigo.github.io/ChessX/ip.html','_blank');
+};
+
+function resetSingleForm(){
+  // Reset FIDE choice
+  document.querySelectorAll('input[name="hasFide"]').forEach(r=>r.checked=false);
+  hasFide    = null;
+  fideChecked= false;
+  document.getElementById('fideYesBlock').classList.add('hidden');
+  document.getElementById('fideNoBlock').classList.add('hidden');
+  document.getElementById('singleMainForm').classList.add('hidden');
+  document.getElementById('fideDupAlert').style.display = 'none';
+  document.getElementById('fideOkAlert').style.display  = 'none';
+  document.getElementById('s_fideId').value = '';
+  // Reset auto fields
+  document.getElementById('s_enteredBy').value  = loggedInAdmin;
+  document.getElementById('s_dateofEntry').value = todayDMY();
+}
+
+// ════════════════════════════════════════════
+// INIT: set country defaults
+// ════════════════════════════════════════════
+window.addEventListener('load', ()=>{
+  // trigger country/state defaults
+  const cntryIn = document.getElementById('s_country');
+  if(cntryIn){ onCountryChange(); }
+});
+
+// also export onCountryChange to window so DOB fires
+window.onCountryChange = onCountryChange;
+window.onStateChange   = onStateChange;
+window.updateSingleIpId = window.updateSingleIpId;
+
+</script>
+</body>
+</html>
