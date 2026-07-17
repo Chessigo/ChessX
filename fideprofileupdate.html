@@ -576,8 +576,8 @@ function buildIpdbPayload(rec, existingDoc){
   const yyyy = now.getFullYear();
   const hh   = String(now.getHours()).padStart(2,'0');
   const min  = String(now.getMinutes()).padStart(2,'0');
-  payload.dateofEdit = dd + '/' + mo + '/' + yyyy;
-  payload.timeofEdit = hh + ':' + min;
+  payload.dateOfEdit = dd + '/' + mo + '/' + yyyy;
+  payload.timeOfEdit = hh + ':' + min;
 
   return payload;
 }
