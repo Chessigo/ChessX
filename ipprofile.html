@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ChessX IP Profile</title>
+<style>
+:root{
+  --blue-dark:#0d1b6e;--blue-mid:#1a3fad;--blue-accent:#1565C0;
+  --bg:#f0f4ff;--border:#c5d3f0;--text:#111827;--muted:#6b7280;
+  --red:#dc2626;--green:#16a34a;--gold:#d97706;--platinum:#7c3aed;
+  --c-titled:#7c3aed;--c-rated:#16a34a;--c-arena:#ea580c;--c-arbiter:#dc2626;--c-trainer:#1a3fad;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+.pageHeader{background:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(13,27,110,.10);border-bottom:2px solid var(--border);flex-wrap:wrap;gap:8px;}
+.pageHeader .left{display:flex;align-items:center;gap:10px;}
+.pageHeader img{height:48px;}
+.pageHeader h1{font-size:.95rem;font-weight:700;color:var(--blue-dark);}
+.pageHeader p{font-size:.7rem;color:var(--muted);}
+.btnIPLogin{background:linear-gradient(90deg,var(--blue-dark),var(--blue-accent));color:#fff;border:none;border-radius:7px;padding:7px 16px;font-size:.8rem;font-weight:700;cursor:pointer;}
+.btnIPLogin:hover{opacity:.85;}
+.loggedBadge{font-size:.75rem;color:var(--green);font-weight:700;}
+
+.profileWrap{max-width:660px;margin:20px auto 40px;padding:0 14px;}
+.backLink{display:inline-flex;align-items:center;gap:5px;color:var(--blue-accent);font-size:.8rem;font-weight:600;text-decoration:none;margin-bottom:12px;}
+.backLink:hover{text-decoration:underline;}
+
+.profileCard{background:#fff;border-radius:14px;box-shadow:0 4px 20px rgba(13,27,110,.10);overflow:hidden;}
+
+/* HERO */
+.profileHero{background:linear-gradient(135deg,var(--blue-dark),var(--blue-accent));padding:28px 20px 22px;text-align:center;}
+.photoBox{width:100px;height:100px;border-radius:12px;border:3px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:2.8rem;overflow:hidden;}
+.photoBox img{width:100%;height:100%;object-fit:cover;}
+.heroName{color:#fff;font-size:1.5rem;font-weight:800;margin-bottom:5px;}
+.heroId{color:rgba(255,255,255,.8);font-size:.88rem;}
+.heroId a{color:#fff;font-weight:700;text-decoration:underline;}
+.memBadge{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.18);color:#fff;border-radius:20px;padding:4px 14px;font-size:.8rem;font-weight:700;margin-top:6px;}
+
+/* RATINGS */
+.ratingsGrid{display:grid;grid-template-columns:1fr 1fr 1fr;border-top:none;}
+.ratingBox{padding:16px 10px;text-align:center;border-right:1px solid var(--border);}
+.ratingBox:last-child{border-right:none;}
+.ratingBox:nth-child(1){background:linear-gradient(135deg,#fff7ed,#fef3c7);}
+.ratingBox:nth-child(2){background:linear-gradient(135deg,#f0fdf4,#dcfce7);}
+.ratingBox:nth-child(3){background:linear-gradient(135deg,#eff6ff,#dbeafe);}
+.rLabel{font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.7px;margin-bottom:5px;}
+.ratingBox:nth-child(1) .rLabel{color:#92400e;}
+.ratingBox:nth-child(2) .rLabel{color:#14532d;}
+.ratingBox:nth-child(3) .rLabel{color:#1e3a5f;}
+.rVal{font-size:1.5rem;font-weight:800;color:var(--blue-dark);}
+.rNR{font-size:.85rem;font-weight:600;color:var(--muted);}
+
+/* SECTIONS */
+.pSection{border-top:1.5px solid var(--border);padding:14px 18px;}
+.pSectionTitle{font-size:.65rem;font-weight:800;color:var(--blue-dark);letter-spacing:1.5px;text-transform:uppercase;background:#f0f4ff;padding:4px 10px;border-radius:5px;margin-bottom:9px;}
+.pRow{display:flex;justify-content:space-between;align-items:flex-start;padding:5px 0;border-bottom:1px solid #f5f5f5;gap:10px;}
+.pRow:last-child{border-bottom:none;}
+.pKey{font-size:.7rem;color:var(--muted);min-width:150px;flex-shrink:0;}
+.pVal{font-size:.78rem;font-weight:600;color:var(--text);text-align:right;word-break:break-all;}
+.pVal a{color:var(--blue-accent);text-decoration:none;font-weight:700;}
+.pVal a:hover{text-decoration:underline;}
+
+.chip{border-radius:4px;padding:2px 7px;font-size:.7rem;font-weight:700;display:inline-block;margin:1px;}
+.chip-yes{background:#dcfce7;color:#14532d;}
+.chip-no{background:#f3f4f6;color:var(--muted);}
+.chip-titled{background:#f3e8ff;color:var(--c-titled);}
+.chip-rated{background:#dcfce7;color:var(--c-rated);}
+.chip-arena{background:#fff7ed;color:var(--c-arena);}
+.chip-arbiter{background:#fee2e2;color:var(--c-arbiter);}
+.chip-trainer{background:#dbeafe;color:var(--c-trainer);}
+
+/* LOGIN PANEL */
+.loginPanel{border-top:1.5px solid var(--border);padding:16px 18px;background:#f8faff;}
+.loginPanel h4{font-size:.7rem;font-weight:800;color:var(--blue-dark);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;}
+.loginGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.loginGrid label{font-size:.67rem;color:var(--muted);display:block;margin-bottom:3px;}
+.loginGrid input{width:100%;border:1.5px solid var(--border);border-radius:6px;padding:8px 10px;font-size:.82rem;outline:none;}
+.loginGrid input:focus{border-color:var(--blue-accent);}
+.btnVerify{width:100%;background:linear-gradient(90deg,var(--blue-dark),var(--blue-accent));color:#fff;border:none;border-radius:7px;padding:9px;font-size:.84rem;font-weight:700;cursor:pointer;}
+.btnVerify:hover{opacity:.88;}
+.loginErr{color:var(--red);font-size:.73rem;margin-top:6px;display:none;}
+
+/* EDIT SECTION */
+.editSection{border-top:1.5px solid var(--border);padding:16px 18px;display:none;}
+.editSectionTitle{font-size:.65rem;font-weight:800;color:var(--blue-dark);letter-spacing:1.2px;text-transform:uppercase;background:#eff6ff;padding:4px 10px;border-radius:5px;margin-bottom:10px;margin-top:14px;}
+.editGrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:12px;}
+.editFull{grid-column:1/-1;}
+.editItem label{font-size:.67rem;font-weight:700;color:var(--blue-dark);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:3px;}
+.editItem input,.editItem select{border:1.5px solid var(--border);border-radius:6px;padding:7px 10px;font-size:.82rem;outline:none;width:100%;}
+.editItem input:focus,.editItem select:focus{border-color:var(--blue-accent);}
+.editItem input:disabled{background:#f3f4f6;color:var(--muted);}
+.ferr{color:var(--red);font-size:.68rem;min-height:14px;}
+.ddWrap{position:relative;}
+.ddInput{width:100%;border:1.5px solid var(--border);border-radius:6px;padding:7px 10px;font-size:.82rem;outline:none;}
+.ddInput:focus{border-color:var(--blue-accent);}
+.ddList{position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid var(--border);border-top:none;border-radius:0 0 7px 7px;max-height:170px;overflow-y:auto;z-index:200;display:none;}
+.ddList.open{display:block;}
+.ddItem{padding:7px 10px;font-size:.82rem;cursor:pointer;}
+.ddItem:hover,.ddItem.active{background:#f0f4ff;}
+.radioGroup{display:flex;gap:14px;padding:7px 0;}
+.radioGroup label{display:flex;align-items:center;gap:5px;font-size:.82rem;cursor:pointer;}
+.pinChangeWrap{border:1.5px dashed var(--border);border-radius:8px;padding:12px;margin-bottom:12px;}
+.pinGrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.confirmPinWrap{background:#f0f4ff;border-radius:7px;padding:12px;margin-bottom:10px;}
+.confirmPinWrap label{font-size:.68rem;font-weight:700;color:var(--blue-dark);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px;}
+.confirmPinWrap input{width:100%;border:1.5px solid var(--border);border-radius:6px;padding:7px 10px;font-size:.82rem;outline:none;}
+.btnModify{width:100%;background:linear-gradient(90deg,#16a34a,#15803d);color:#fff;border:none;border-radius:7px;padding:10px;font-size:.86rem;font-weight:700;cursor:pointer;margin-top:4px;}
+.btnModify:hover{opacity:.88;}
+.editMsg{font-size:.78rem;margin-top:6px;display:none;}
+.editMsg.ok{color:var(--green);}
+.editMsg.err{color:var(--red);}
+
+/* LOADING */
+.loadingWrap,.errorWrap{text-align:center;padding:50px;color:var(--muted);}
+.errorWrap{color:var(--red);}
+
+@media(max-width:580px){
+  .editGrid,.loginGrid,.pinGrid{grid-template-columns:1fr;}
+  .ratingsGrid{grid-template-columns:1fr;}
+  .heroName{font-size:1.15rem;}
+}
+</style>
+</head>
+<body>
+
+<div class="pageHeader">
+  <div class="left">
+    <div id="hdrLogoWrap"><!-- logo injected by JS --></div>
+    <div>
+      <h1>ChessX IP Profile</h1>
+      <p>Individual Person</p>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span class="loggedBadge" id="loggedBadge" style="display:none;"></span>
+    <button class="btnIPLogin" id="btnHeaderLogin">&#x1F511; IP Login</button>
+  </div>
+</div>
+
+<div class="profileWrap">
+  <a href="javascript:history.back()" class="backLink">&#x2190; Back to IP Database</a>
+  <div id="loadingWrap" class="loadingWrap">&#x23F3; Loading profile...</div>
+  <div id="errorWrap" class="errorWrap" style="display:none;">&#x26A0; Profile not found.</div>
+
+  <div class="profileCard" id="profileCard" style="display:none;">
+
+    <!-- HERO -->
+    <div class="profileHero">
+      <div class="photoBox" id="pPhoto">&#x1F464;</div>
+      <div class="heroName" id="pName">-</div>
+      <div class="heroId" id="pId">-</div>
+      <div id="pMem"></div>
+    </div>
+
+    <!-- RATINGS -->
+    <div class="ratingsGrid">
+      <div class="ratingBox">
+        <div class="rLabel">Standard Rating</div>
+        <div class="rVal" id="rStd" style="display:none;"></div>
+        <div class="rNR" id="rStdNR">Not Rated</div>
+      </div>
+      <div class="ratingBox">
+        <div class="rLabel">Rapid Rating</div>
+        <div class="rVal" id="rRapid" style="display:none;"></div>
+        <div class="rNR" id="rRapidNR">Not Rated</div>
+      </div>
+      <div class="ratingBox">
+        <div class="rLabel">Blitz Rating</div>
+        <div class="rVal" id="rBlitz" style="display:none;"></div>
+        <div class="rNR" id="rBlitzNR">Not Rated</div>
+      </div>
+    </div>
+
+    <!-- SECTIONS filled by JS -->
+    <div class="pSection" id="secId"></div>
+    <div class="pSection" id="secPersonal"></div>
+    <div class="pSection" id="secTitles"></div>
+    <div class="pSection" id="secMembership"></div>
+    <div class="pSection" id="secMeta" style="display:none;"></div>
+
+    <!-- LOGIN PANEL -->
+    <div class="loginPanel" id="loginPanel">
+      <h4>&#x1F510; Login to View Full Details &amp; Edit Profile</h4>
+      <div class="loginGrid">
+        <div>
+          <label>ChessX IP ID</label>
+          <input type="text" id="lIpId" placeholder="Your IP ID" autocomplete="off"/>
+        </div>
+        <div>
+          <label>ChessX IP PIN (6 digits)</label>
+          <input type="password" id="lIpPin" placeholder="6-digit PIN" maxlength="6" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'')"/>
+        </div>
+      </div>
+      <button class="btnVerify" onclick="doIPLogin()">&#x1F50D; Verify &amp; Login</button>
+      <div class="loginErr" id="loginErr"></div>
+    </div>
+
+    <!-- EDIT SECTION -->
+    <div class="editSection" id="editSection">
+      <div style="font-size:.7rem;font-weight:800;color:var(--blue-dark);letter-spacing:1.2px;text-transform:uppercase;background:#f0f4ff;padding:5px 10px;border-radius:5px;margin-bottom:12px;">&#x270F; Edit Profile</div>
+
+      <div class="editSectionTitle">ID Details</div>
+      <div class="editGrid">
+        <div class="editItem">
+          <label>FIDE ID (Numeric)</label>
+          <input type="text" id="e_fideID" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'')"/>
+          <div class="ferr" id="err_fideID"></div>
+        </div>
+        <div class="editItem">
+          <label>AICF ID</label>
+          <input type="text" id="e_aicfID"/>
+          <div class="ferr" id="err_aicfID"></div>
+        </div>
+        <div class="editItem">
+          <label>Chess.com ID</label>
+          <input type="text" id="e_chesscomID"/>
+          <div class="ferr" id="err_chesscomID"></div>
+        </div>
+        <div class="editItem">
+          <label>Lichess ID</label>
+          <input type="text" id="e_lichessID"/>
+          <div class="ferr" id="err_lichessID"></div>
+        </div>
+      </div>
+
+      <div class="editSectionTitle">Personal Details</div>
+      <div class="editGrid">
+        <div class="editItem">
+          <label>First Name</label>
+          <input type="text" id="e_firstName" oninput="this.value=this.value.toUpperCase();buildFullName()"/>
+          <div class="ferr" id="err_firstName"></div>
+        </div>
+        <div class="editItem">
+          <label>Middle Name</label>
+          <input type="text" id="e_middleName" oninput="this.value=this.value.toUpperCase();buildFullName()"/>
+          <div class="ferr"></div>
+        </div>
+        <div class="editItem">
+          <label>Last Name (Surname)</label>
+          <input type="text" id="e_lastName" oninput="this.value=this.value.toUpperCase();buildFullName()"/>
+          <div class="ferr" id="err_lastName"></div>
+        </div>
+        <div class="editItem">
+          <label>Full Name (Auto)</label>
+          <input type="text" id="e_fullName" disabled/>
+          <div class="ferr"></div>
+        </div>
+        <div class="editItem">
+          <label>Date of Birth (DD/MM/YYYY)</label>
+          <input type="text" id="e_dob" maxlength="10" inputmode="numeric" oninput="autoSlash(this)"/>
+          <div class="ferr" id="err_dob"></div>
+        </div>
+        <div class="editItem">
+          <label>Gender</label>
+          <div class="radioGroup">
+            <label><input type="radio" name="eg" value="MALE"/> Male</label>
+            <label><input type="radio" name="eg" value="FEMALE"/> Female</label>
+          </div>
+          <div class="ferr" id="err_gender"></div>
+        </div>
+        <div class="editItem">
+          <label>Contact No (10 digits)</label>
+          <input type="text" id="e_contactNo" inputmode="numeric" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'')"/>
+          <div class="ferr" id="err_contactNo"></div>
+        </div>
+        <div class="editItem">
+          <label>WhatsApp No (10 digits)</label>
+          <input type="text" id="e_whatsappNo" inputmode="numeric" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'')"/>
+          <div class="ferr" id="err_whatsappNo"></div>
+        </div>
+        <div class="editItem editFull">
+          <label>Email ID</label>
+          <input type="email" id="e_emailID"/>
+          <div class="ferr" id="err_emailID"></div>
+        </div>
+        <div class="editItem">
+          <label>Country (Not Editable)</label>
+          <input type="text" id="e_country" disabled/>
+          <div class="ferr"></div>
+        </div>
+        <div class="editItem">
+          <label>State</label>
+          <div class="ddWrap">
+            <input type="text" class="ddInput" id="e_state" placeholder="Search state..." oninput="filterStateDd()" autocomplete="off" onfocus="filterStateDd()"/>
+            <div class="ddList" id="ddState"></div>
+          </div>
+          <input type="hidden" id="e_stateVal"/>
+          <div class="ferr" id="err_state"></div>
+        </div>
+        <div class="editItem">
+          <label>District</label>
+          <div class="ddWrap">
+            <input type="text" class="ddInput" id="e_district" placeholder="Search district..." oninput="filterDistrictDd()" autocomplete="off" onfocus="filterDistrictDd()"/>
+            <div class="ddList" id="ddDistrict"></div>
+          </div>
+          <input type="hidden" id="e_districtVal"/>
+          <div class="ferr" id="err_district"></div>
+        </div>
+        <div class="editItem">
+          <label>City / Taluka</label>
+          <input type="text" id="e_city"/>
+          <div class="ferr" id="err_city"></div>
+        </div>
+        <div class="editItem">
+          <label>PIN Code (6 digits)</label>
+          <input type="text" id="e_pinCode" inputmode="numeric" maxlength="6" oninput="this.value=this.value.replace(/\D/g,'')"/>
+          <div class="ferr" id="err_pinCode"></div>
+        </div>
+      </div>
+
+      <div class="pinChangeWrap">
+        <div style="font-size:.7rem;font-weight:700;color:var(--blue-dark);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;">&#x1F511; Change IP PIN (Optional)</div>
+        <div class="pinGrid">
+          <div class="editItem">
+            <label>Old PIN</label>
+            <input type="password" id="e_oldPin" inputmode="numeric" maxlength="6" oninput="this.value=this.value.replace(/\D/g,'')"/>
+            <div class="ferr" id="err_oldPin"></div>
+          </div>
+          <div class="editItem">
+            <label>New PIN</label>
+            <input type="password" id="e_newPin" inputmode="numeric" maxlength="6" oninput="this.value=this.value.replace(/\D/g,'')"/>
+            <div class="ferr" id="err_newPin"></div>
+          </div>
+          <div class="editItem">
+            <label>Confirm New PIN</label>
+            <input type="password" id="e_confirmPin" inputmode="numeric" maxlength="6" oninput="this.value=this.value.replace(/\D/g,'')"/>
+            <div class="ferr" id="err_confirmPin"></div>
+          </div>
+        </div>
+        <p style="font-size:.67rem;color:var(--muted);">Leave all three blank to keep current PIN.</p>
+      </div>
+
+      <div class="confirmPinWrap">
+        <label>&#x1F510; Enter Current IP PIN to Confirm All Changes</label>
+        <input type="password" id="e_confirmFinal" inputmode="numeric" maxlength="6" oninput="this.value=this.value.replace(/\D/g,'')"/>
+        <div class="ferr" id="err_confirmFinal"></div>
+      </div>
+
+      <button class="btnModify" onclick="doModify()">&#x2714; Modify &amp; Save Changes</button>
+      <div class="editMsg" id="editMsg"></div>
+    </div>
+
+  </div><!-- /profileCard -->
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, query, where, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBApKwOIjF4pk0PJZBJo7GM8a7a8ECRIxU",
+  authDomain: "chessx-4e0ec.firebaseapp.com",
+  projectId: "chessx-4e0ec",
+  storageBucket: "chessx-4e0ec.firebasestorage.app",
+  messagingSenderId: "888357289080",
+  appId: "1:888357289080:web:5ecdf9890bf09408eac18d",
+  measurementId: "G-XBRF1H45K8"
+};
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+// ── STATES / DISTRICTS ──
+const stateList = ["Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh","Goa","Gujarat","Haryana","Himachal Pradesh","Jharkhand","Karnataka","Kerala","Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram","Nagaland","Odisha","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana","Tripura","Uttar Pradesh","Uttarakhand","West Bengal","Andaman and Nicobar Islands","Chandigarh","Dadra and Nagar Haveli and Daman and Diu","Delhi","Jammu and Kashmir","Ladakh","Lakshadweep","Puducherry"];
+const districtMap = {
+  "Gujarat":["Ahmedabad","Amreli","Anand","Aravalli","Banaskantha","Bharuch","Bhavnagar","Botad","Chhota Udaipur","Dahod","Dang","Devbhoomi Dwarka","Gandhinagar","Gir Somnath","Jamnagar","Junagadh","Kheda","Kutch","Mahisagar","Mehsana","Morbi","Narmada","Navsari","Panchmahal","Patan","Porbandar","Rajkot","Sabarkantha","Surat","Surendranagar","Tapi","Vadodara","Valsad"],
+  "Maharashtra":["Ahmednagar","Akola","Amravati","Aurangabad","Beed","Bhandara","Buldhana","Chandrapur","Dhule","Gadchiroli","Gondia","Hingoli","Jalgaon","Jalna","Kolhapur","Latur","Mumbai City","Mumbai Suburban","Nagpur","Nanded","Nandurbar","Nashik","Osmanabad","Palghar","Parbhani","Pune","Raigad","Ratnagiri","Sangli","Satara","Sindhudurg","Solapur","Thane","Wardha","Washim","Yavatmal"],
+  "Tamil Nadu":["Ariyalur","Chengalpattu","Chennai","Coimbatore","Cuddalore","Dharmapuri","Dindigul","Erode","Kallakurichi","Kancheepuram","Kanyakumari","Karur","Krishnagiri","Madurai","Nagapattinam","Namakkal","Nilgiris","Perambalur","Pudukottai","Ramanathapuram","Ranipet","Salem","Sivaganga","Tenkasi","Thanjavur","Theni","Thoothukudi","Tiruchirappalli","Tirunelveli","Tirupattur","Tiruppur","Tiruvallur","Tiruvannamalai","Tiruvarur","Vellore","Viluppuram","Virudhunagar"],
+  "Delhi":["Central Delhi","East Delhi","New Delhi","North Delhi","North East Delhi","North West Delhi","Shahdara","South Delhi","South East Delhi","South West Delhi","West Delhi"],
+};
+
+const $ = id => document.getElementById(id);
+const gv = id => ($(id)?.value||'').trim();
+const mask = (v,n=3) => { if(!v) return '-'; const s=String(v); return s.length<=n?s:'***'+s.slice(-n); };
+const maskEmail = v => v ? v.slice(0,3)+'***' : '-';
+const fideLink = (fid,label) => fid ? `<a href="https://ratings.fide.com/profile/${fid}" target="_blank">${label}</a>` : label;
+const isFide = id => id && !String(id).startsWith('IP');
+const chipBool = (v,label) => `<span class="chip ${v==='YES'?'chip-yes':'chip-no'}">${v==='YES'?'✔':'✘'} ${label}</span>`;
+const chip = (v,cls) => v ? `<span class="chip ${cls}">${v}</span>` : '';
+
+window.autoSlash = el => {
+  let v = el.value.replace(/\D/g,'');
+  if(v.length>2) v = v.slice(0,2)+'/'+v.slice(2);
+  if(v.length>5) v = v.slice(0,5)+'/'+v.slice(5);
+  el.value = v.slice(0,10);
+};
+window.buildFullName = () => {
+  const f=(gv('e_firstName')||'').trim();
+  const m=(gv('e_middleName')||'').trim();
+  const l=(gv('e_lastName')||'').trim();
+  $('e_fullName').value = [f,m,l].filter(Boolean).join(' ');
+};
+
+// ── GET IPID FROM URL ──
+function getIpId(){
+  const parts = window.location.pathname.split('/');
+  for(let i=0;i<parts.length;i++){
+    if(parts[i]==='profile' && parts[i+1]) return parts[i+1];
+  }
+  return new URLSearchParams(window.location.search).get('id')||null;
+}
+
+let profileRecord=null, profileDocId=null, loggedIn=false;
+
+// ── LOAD ──
+async function loadProfile(){
+  const ipId = getIpId();
+  if(!ipId){ showError('No IP ID in URL.'); return; }
+  if($('lIpId')) $('lIpId').value = ipId;
+  try{
+    const snap = await getDocs(query(collection(db,'ipdbchessX'), where('ipId','==',ipId)));
+    if(snap.empty){ showError('Profile not found.'); return; }
+    profileRecord = snap.docs[0].data();
+    profileDocId  = snap.docs[0].id;
+    renderProfile(false);
+  }catch(e){ showError('Error: '+e.message); }
+}
+function showError(msg){ $('loadingWrap').style.display='none'; $('errorWrap').style.display='block'; $('errorWrap').textContent='⚠ '+msg; }
+
+function renderProfile(verified){
+  const r = profileRecord;
+  $('loadingWrap').style.display='none';
+  $('errorWrap').style.display='none';
+  $('profileCard').style.display='block';
+
+  // Photo
+  const ph=$('pPhoto');
+  if(r.pageUrl) ph.innerHTML=`<img src="${r.pageUrl}" onerror="this.parentElement.innerHTML='&#x1F464;'"/>`;
+  else ph.innerHTML='&#x1F464;';
+
+  $('pName').textContent = r.fullName||'-';
+  const ipId = r.ipId||'-';
+  $('pId').innerHTML = isFide(ipId) ? `ChessX IP ID: ${fideLink(r.fideID,ipId)}` : `ChessX IP ID: ${ipId}`;
+
+  // Membership badge
+  const mEl=$('pMem');
+  if(r.membershipStatus==='Active'&&r.membershipType){
+    const ico=r.membershipType==='Gold'?'&#x1F3C5;':'&#x1F48E;';
+    mEl.innerHTML=`<span class="memBadge">${ico} ${r.membershipType} Member</span>`;
+  } else mEl.innerHTML='';
+
+  // Ratings
+  const setR=(vid,nid,v)=>{ if(v){$(vid).textContent=v;$(vid).style.display='block';$(nid).style.display='none';}else{$(vid).style.display='none';$(nid).style.display='block';} };
+  setR('rStd','rStdNR',r.stdRating);
+  setR('rRapid','rRapidNR',r.rapidRating);
+  setR('rBlitz','rBlitzNR',r.blitzRating);
+
+  // Section builder
+  const sec=(id,title,rows)=>{
+    $(id).innerHTML=`<div class="pSectionTitle">${title}</div>`+rows.map(([k,v])=>`<div class="pRow"><span class="pKey">${k}</span><span class="pVal">${v||'-'}</span></div>`).join('');
+  };
+
+  // ID Section
+  sec('secId','&#x1F194; ID Section',[
+    ['ChessX IP ID', isFide(ipId)?fideLink(r.fideID,ipId):ipId],
+    ['FIDE ID', r.fideID?fideLink(r.fideID,r.fideID):'-'],
+    ['AICF ID', r.aicfID||'-'],
+    ['Chess.com ID', verified?(r.chesscomID||'-'):(r.chesscomID?'&#x2022;&#x2022;&#x2022;':'-')],
+    ['Lichess ID',   verified?(r.lichessID||'-')  :(r.lichessID?'&#x2022;&#x2022;&#x2022;':'-')],
+  ]);
+
+  // Personal
+  const dob    = verified?(r.dob||'-'):(r.dob?'**/**/'+r.dob.slice(-4):'-');
+  const contact = verified?(r.contactNo||'-'):(r.contactNo?mask(r.contactNo,3):'-');
+  const wapp    = verified?(r.whatsappNo||'-'):(r.whatsappNo?mask(r.whatsappNo,3):'-');
+  const email   = verified?(r.emailID||'-'):(r.emailID?maskEmail(r.emailID):'-');
+
+  sec('secPersonal','&#x1F464; Personal Details',[
+    ['Full Name',r.fullName||'-'],
+    ['Date of Birth',dob],
+    ['Gender',r.gender||'-'],
+    ['Contact No',contact],
+    ['WhatsApp No',wapp],
+    ['Email ID',email],
+    ['Country',r.country||'-'],
+    ['State',r.state||'-'],
+    ['District',r.district||'-'],
+    ['City / Taluka',r.city||'-'],
+    ['PIN Code (Postal)',r.pinCode||'-'],
+  ]);
+
+  // Titles & Roles
+  $('secTitles').innerHTML=`<div class="pSectionTitle">&#x1F3C6; FIDE Titles &amp; Roles</div>`+
+    `<div class="pRow"><span class="pKey">Rated Player</span><span class="pVal">${chipBool(r.ratedPlayer,'Rated Player')}</span></div>`+
+    `<div class="pRow"><span class="pKey">Titled Player &mdash; Title</span><span class="pVal">${chipBool(r.titledPlayer,'Titled')} ${chip(r.fidePlayerTitle,'chip-titled')}</span></div>`+
+    `<div class="pRow"><span class="pKey">FIDE Trainer &mdash; Title</span><span class="pVal">${chipBool(r.fideTrainer,'Trainer')} ${chip(r.fideTrainerTitle,'chip-trainer')}</span></div>`+
+    `<div class="pRow"><span class="pKey">FIDE Arbiter &mdash; Title</span><span class="pVal">${chipBool(r.fideArbiter,'Arbiter')} ${chip(r.fideArbiterTitle,'chip-arbiter')}</span></div>`+
+    `<div class="pRow"><span class="pKey">Arena Titled &mdash; FOA</span><span class="pVal">${chipBool(r.arenaTitledPlayer,'Arena Titled')} ${chip(r.foaTitle,'chip-arena')}</span></div>`;
+
+  // Membership
+  const pinDisplay = verified?(r.ipPin||'-'):'&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;';
+  $('secMembership').innerHTML=`<div class="pSectionTitle">&#x1F4B3; Membership &amp; System Details</div>`+
+    `<div class="pRow"><span class="pKey">Membership Status</span><span class="pVal">${r.membershipStatus||'-'}</span></div>`+
+    `<div class="pRow"><span class="pKey">Membership Type</span><span class="pVal">${r.membershipType||'-'}</span></div>`+
+    `<div class="pRow"><span class="pKey">Start Date</span><span class="pVal">${r.membershipStart||'-'}</span></div>`+
+    `<div class="pRow"><span class="pKey">End Date</span><span class="pVal">${r.membershipEnd||'-'}</span></div>`+
+    `<div class="pRow"><span class="pKey">ChessX IP PIN</span><span class="pVal">${pinDisplay}</span></div>`+
+    `<div class="pRow"><span class="pKey">Country Code</span><span class="pVal">${r.countryCode||'+91'}</span></div>`+
+    `<div class="pRow"><span class="pKey">Time Zone</span><span class="pVal">${r.timeZone||'Asia/Kolkata'}</span></div>`;
+
+  // Login / Edit
+  if(verified){
+    $('loginPanel').style.display='none';
+    showEditSection();
+  } else {
+    $('loginPanel').style.display='block';
+    $('editSection').style.display='none';
+  }
+}
+
+// ── IP LOGIN ──
+$('btnHeaderLogin').addEventListener('click',()=>{ $('loginPanel')?.scrollIntoView({behavior:'smooth'}); });
+window.doIPLogin = ()=>{
+  const entId  = gv('lIpId');
+  const entPin = gv('lIpPin');
+  const errEl  = $('loginErr');
+  errEl.style.display='none';
+  if(!entId||!entPin){ errEl.textContent='Enter IP ID and PIN.'; errEl.style.display='block'; return; }
+  if(!profileRecord){ return; }
+  if(entId!==profileRecord.ipId||entPin!==profileRecord.ipPin){
+    errEl.textContent='❌ Incorrect IP ID or PIN.'; errEl.style.display='block'; return;
+  }
+  loggedIn=true;
+  $('loggedBadge').textContent='✅ Logged in: '+entId;
+  $('loggedBadge').style.display='inline';
+  $('btnHeaderLogin').style.display='none';
+  renderProfile(true);
+};
+
+// ── SHOW EDIT SECTION ──
+function showEditSection(){
+  const r=profileRecord;
+  $('editSection').style.display='block';
+  $('e_fideID').value   = r.fideID   ||'';
+  $('e_aicfID').value   = r.aicfID   ||'';
+  $('e_chesscomID').value=r.chesscomID||'';
+  $('e_lichessID').value = r.lichessID||'';
+  $('e_firstName').value = r.firstName||'';
+  $('e_middleName').value= r.middleName||'';
+  $('e_lastName').value  = r.lastName ||'';
+  $('e_fullName').value  = r.fullName ||'';
+  $('e_dob').value       = r.dob     ||'';
+  document.querySelectorAll('input[name="eg"]').forEach(rb=>rb.checked=(rb.value===r.gender));
+  $('e_contactNo').value = r.contactNo||'';
+  $('e_whatsappNo').value= r.whatsappNo||'';
+  $('e_emailID').value   = r.emailID ||'';
+  $('e_country').value   = r.country ||'India';
+  $('e_state').value     = r.state   ||''; $('e_stateVal').value = r.state||'';
+  $('e_district').value  = r.district||''; $('e_districtVal').value = r.district||'';
+  $('e_city').value      = r.city    ||'';
+  $('e_pinCode').value   = r.pinCode ||'';
+  initDropdowns();
+}
+
+// ── DROPDOWNS ──
+function initDropdowns(){
+  buildDd('ddState', stateList, item=>{
+    $('e_state').value=item; $('e_stateVal').value=item;
+    $('e_district').value=''; $('e_districtVal').value='';
+    buildDd('ddDistrict', districtMap[item]||[], di=>{ $('e_district').value=di; $('e_districtVal').value=di; });
+  });
+  const curState = $('e_stateVal').value;
+  if(curState) buildDd('ddDistrict', districtMap[curState]||[], di=>{ $('e_district').value=di; $('e_districtVal').value=di; });
+}
+function buildDd(listId, items, onSelect){
+  const el=$(listId);
+  el._items = items;
+  el._onSelect = onSelect;
+  renderDdItems(listId, '');
+}
+function renderDdItems(listId, filter){
+  const el=$(listId); if(!el) return;
+  const f=(filter||'').toLowerCase();
+  const items=(el._items||[]).filter(x=>x.toLowerCase().includes(f));
+  el.innerHTML=items.map(x=>`<div class="ddItem" data-val="${x}">${x}</div>`).join('');
+  el.querySelectorAll('.ddItem').forEach(d=>{
+    d.addEventListener('mousedown',e=>{ e.preventDefault(); const v=d.dataset.val; el._onSelect(v); el.classList.remove('open'); });
+  });
+}
+window.filterStateDd = ()=>{
+  const v=$('e_state').value;
+  renderDdItems('ddState',v);
+  $('ddState').classList.add('open');
+};
+window.filterDistrictDd = ()=>{
+  const v=$('e_district').value;
+  renderDdItems('ddDistrict',v);
+  $('ddDistrict').classList.add('open');
+};
+document.addEventListener('click',e=>{
+  if(!e.target.closest('#ddState,.ddWrap')){
+    $('ddState')?.classList.remove('open');
+    $('ddDistrict')?.classList.remove('open');
+  }
+});
+$('e_state').addEventListener('blur',()=>setTimeout(()=>$('ddState')?.classList.remove('open'),200));
+$('e_district').addEventListener('blur',()=>setTimeout(()=>$('ddDistrict')?.classList.remove('open'),200));
+
+// ── MODIFY / SAVE ──
+window.doModify = async ()=>{
+  // Clear errors
+  ['fideID','aicfID','chesscomID','lichessID','firstName','lastName','dob','gender','contactNo','whatsappNo','emailID','state','district','city','pinCode','oldPin','newPin','confirmPin','confirmFinal']
+    .forEach(f=>{ const el=$(`err_${f}`); if(el) el.textContent=''; });
+  const msg=$('editMsg'); msg.style.display='none';
+
+  let ok=true;
+  const e=(id,m)=>{ const el=$(`err_${id}`); if(el){el.textContent=m;} ok=false; };
+
+  const fideID     = gv('e_fideID');
+  const aicfID     = gv('e_aicfID');
+  const chesscomID = gv('e_chesscomID');
+  const lichessID  = gv('e_lichessID');
+  const firstName  = gv('e_firstName');
+  const middleName = gv('e_middleName');
+  const lastName   = gv('e_lastName');
+  const fullName   = gv('e_fullName');
+  const dob        = gv('e_dob');
+  const gender     = document.querySelector('input[name="eg"]:checked')?.value||'';
+  const contactNo  = gv('e_contactNo');
+  const whatsappNo = gv('e_whatsappNo');
+  const emailID    = gv('e_emailID');
+  const state      = gv('e_stateVal');
+  const district   = gv('e_districtVal');
+  const city       = gv('e_city');
+  const pinCode    = gv('e_pinCode');
+  const oldPin     = gv('e_oldPin');
+  const newPin     = gv('e_newPin');
+  const confirmPin = gv('e_confirmPin');
+  const finalPin   = gv('e_confirmFinal');
+
+  if(fideID&&!/^\d+$/.test(fideID)) e('fideID','Must be numeric');
+  if(!firstName) e('firstName','Required');
+  if(!lastName)  e('lastName','Required');
+  if(!dob||dob.length!==10) e('dob','Enter DD/MM/YYYY');
+  if(!gender)   e('gender','Select gender');
+  if(!contactNo||contactNo.length!==10) e('contactNo','Exactly 10 digits');
+  if(!whatsappNo||whatsappNo.length!==10) e('whatsappNo','Exactly 10 digits');
+  if(!emailID||!/\S+@\S+\.\S+/.test(emailID)) e('emailID','Valid email required');
+  if(!state)    e('state','Select state');
+  if(!district) e('district','Select district');
+  if(!city)     e('city','Required');
+  if(pinCode&&pinCode.length!==6) e('pinCode','Must be 6 digits');
+
+  let newIpPin = profileRecord.ipPin;
+  const changingPin = oldPin||newPin||confirmPin;
+  if(changingPin){
+    if(!oldPin||oldPin.length!==6) e('oldPin','Enter current 6-digit PIN');
+    else if(oldPin!==profileRecord.ipPin) e('oldPin','Incorrect current PIN');
+    if(!newPin||newPin.length!==6) e('newPin','New PIN must be 6 digits');
+    if(!confirmPin||confirmPin!==newPin) e('confirmPin','PINs do not match');
+    if(ok) newIpPin=newPin;
+  }
+
+  if(!finalPin||finalPin.length!==6){ e('confirmFinal','Enter your current PIN'); ok=false; }
+  else if(finalPin!==profileRecord.ipPin){ e('confirmFinal','Incorrect PIN'); ok=false; }
+  if(!ok) return;
+
+  const now=new Date();
+  const pad=n=>String(n).padStart(2,'0');
+  const dateStr=`${pad(now.getDate())}/${pad(now.getMonth()+1)}/${now.getFullYear()}`;
+  const timeStr=`${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
+  const updates={fideID,aicfID,chesscomID,lichessID,firstName,middleName,lastName,fullName,dob,gender,contactNo,whatsappNo,emailID,state,district,city,pinCode,ipPin:newIpPin,editedBy:'IP',dateOfEdit:dateStr,timeOfEdit:timeStr};
+  try{
+    await updateDoc(doc(db,'ipdbchessX',profileDocId),updates);
+    Object.assign(profileRecord,updates);
+    msg.textContent='✔ Profile updated successfully!'; msg.className='editMsg ok'; msg.style.display='block';
+    renderProfile(true);
+  }catch(err){ msg.textContent='❌ Error: '+err.message; msg.className='editMsg err'; msg.style.display='block'; }
+};
+
+loadProfile();
+</script>
+</body>
+</html>
