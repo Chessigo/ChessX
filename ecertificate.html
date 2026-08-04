@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>ChessX — Certificate Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#06101f;--surf:#0b1628;--card:#101e35;--card2:#152540;
+  --rim:#1a2e50;--rim2:#22395f;--blue:#0756A5;--blue2:#3b8ef0;
+  --snow:#e8f0fc;--mist:#7a9fc8;--fog:#334d75;
+  --green:#10b981;--red:#ef4444;--amber:#f59e0b;
+  --r:10px;--rs:7px;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--ink);color:var(--snow);min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--ink)}::-webkit-scrollbar-thumb{background:var(--rim2);border-radius:3px}
+
+/* TOP BAR */
+.topbar{position:sticky;top:0;z-index:200;height:60px;padding:0 28px;background:rgba(6,16,31,.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--rim);display:flex;align-items:center;justify-content:space-between;gap:16px}
+.tb-brand{display:flex;align-items:center;gap:12px}
+.tb-gem{width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,#0756A5,#3b8ef0);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;box-shadow:0 0 18px rgba(7,86,165,.5)}
+.tb-name{font-size:15px;font-weight:800}.tb-sub{font-size:10px;color:var(--fog);margin-top:1px}
+.tb-chips{display:flex;gap:4px}
+.chip{padding:5px 14px;border-radius:20px;font-size:11px;font-weight:700;border:1px solid var(--rim);color:var(--fog);cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:5px}
+.chip.on{background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:0 0 14px rgba(7,86,165,.45)}
+.chip.done{border-color:var(--green);color:var(--green)}
+
+/* LAYOUT */
+.app{display:flex;min-height:calc(100vh - 60px)}
+.sidebar{width:340px;flex-shrink:0;border-right:1px solid var(--rim);background:var(--surf);overflow-y:auto;position:sticky;top:60px;height:calc(100vh - 60px);padding:24px 20px 48px}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+/* SIDEBAR */
+.sb-lbl{font-size:9px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--fog);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.sb-lbl::after{content:'';flex:1;height:1px;background:var(--rim)}
+.sb-h{font-size:17px;font-weight:800;margin-bottom:3px}
+.sb-p{font-size:12px;color:var(--mist);line-height:1.5;margin-bottom:16px}
+.sec{margin-bottom:22px}
+.divx{height:1px;background:var(--rim);margin:18px 0}
+
+/* FORM */
+.fl{display:block;font-size:11px;font-weight:700;color:var(--mist);margin-bottom:5px;letter-spacing:.3px}
+.fl em{color:var(--red);font-style:normal}
+.fi,.ft{width:100%;background:var(--ink);border:1.5px solid var(--rim);border-radius:var(--rs);color:var(--snow);font-family:inherit;font-size:13px;padding:9px 12px;outline:none;transition:border-color .18s,box-shadow .18s}
+.fi:focus,.ft:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(7,86,165,.2)}
+.ft{resize:vertical;min-height:90px;line-height:1.75}
+::placeholder{color:var(--fog)}
+.fld{margin-bottom:12px}
+.drow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+/* LOGOS */
+.logo-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:5px}
+.lbox{position:relative;border:1.5px dashed var(--rim2);border-radius:var(--rs);aspect-ratio:1.6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;overflow:hidden;transition:all .18s;background:var(--ink)}
+.lbox:hover{border-color:var(--blue);background:rgba(7,86,165,.07)}
+.lbox.has{border-style:solid;border-color:var(--blue)}
+.lbox input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;padding:0;border:none}
+.lbox img{position:absolute;inset:5px;object-fit:contain;display:none}
+.lbox.has img{display:block}
+.lbox .lic{font-size:18px;color:var(--fog)}.lbox .ltx{font-size:10px;color:var(--fog);font-weight:600}
+.lbox.has .lic,.lbox.has .ltx{opacity:0}
+.lrm{position:absolute;top:3px;right:3px;z-index:2;background:var(--red);color:#fff;border:none;border-radius:4px;width:16px;height:16px;font-size:9px;cursor:pointer;display:none;align-items:center;justify-content:center}
+.lbox.has .lrm{display:flex}
+.lhint{font-size:10px;color:var(--fog);margin-top:3px}
+
+/* SIGNATORIES */
+.slist{display:flex;flex-direction:column;gap:8px}
+.si{border:1.5px solid var(--rim);border-radius:var(--rs);overflow:hidden;transition:border-color .18s}
+.si.on{border-color:var(--blue)}
+.si-hd{display:flex;align-items:center;gap:9px;padding:10px 12px;background:var(--card2);cursor:pointer;user-select:none}
+.si-hd input[type=checkbox]{accent-color:var(--blue);width:14px;height:14px;cursor:pointer;flex-shrink:0}
+.si-name{font-size:12px;font-weight:600;flex:1}
+.si-pill{font-size:9px;padding:2px 7px;border-radius:8px;background:rgba(7,86,165,.22);color:var(--blue2);font-weight:700}
+.si-body{display:none;padding:12px;background:var(--ink);gap:9px;flex-direction:column}
+.si.on .si-body{display:flex}
+.sig-up{border:1.5px dashed var(--rim2);border-radius:var(--rs);min-height:58px;display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer;transition:all .18s;overflow:hidden}
+.sig-up:hover{border-color:var(--blue)}.sig-up.has{border-color:var(--green)}
+.sig-up img{max-height:42px;max-width:90%;object-fit:contain}
+.sig-up input[type=file]{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;padding:0;border:none}
+.sig-ph{font-size:11px;color:var(--fog)}
+.sig-rm{background:none;border:none;color:var(--red);font-size:11px;cursor:pointer;padding:3px 0;font-family:inherit;font-weight:600}
+
+/* TABS */
+.tab-bar{display:flex;border-bottom:1px solid var(--rim);padding:0 32px;background:var(--surf);flex-shrink:0}
+.tab{padding:14px 20px;font-size:13px;font-weight:600;color:var(--fog);cursor:pointer;border-bottom:2px solid transparent;transition:all .18s;user-select:none;margin-bottom:-1px}
+.tab.on{color:var(--blue2);border-bottom-color:var(--blue2)}
+.panels{flex:1;overflow-y:auto;padding:28px 32px 56px}
+.panel{display:none}.panel.on{display:block}
+
+/* PARTICIPANT PANEL */
+.pnl-top{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px}
+.pnl-h{font-size:20px;font-weight:800}.pnl-p{font-size:12px;color:var(--mist);margin-top:3px;line-height:1.5}
+.pna{display:flex;gap:8px;flex-shrink:0}
+.mmal{background:rgba(245,158,11,.09);border:1px solid rgba(245,158,11,.3);border-radius:var(--rs);padding:10px 14px;font-size:12px;color:#fbbf24;margin-bottom:14px;display:none;align-items:flex-start;gap:8px}
+.mmal.show{display:flex}
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.pc{background:var(--card);border:1.5px solid var(--rim);border-radius:var(--r);padding:14px;transition:border-color .18s}
+.pc:focus-within{border-color:var(--blue)}
+.pc-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.pc-lbl{font-size:12px;font-weight:700;display:flex;align-items:center;gap:7px}
+.pc-badge{font-size:9px;padding:2px 7px;border-radius:8px;background:var(--rim);color:var(--fog);font-weight:700}
+.pc-cnt{font-size:11px;color:var(--fog)}.pc-cnt b{color:#e8c96e}
+.pta{width:100%;background:var(--ink);border:1.5px solid var(--rim);border-radius:var(--rs);color:var(--snow);font-family:'Courier New',monospace;font-size:13px;padding:10px 12px;outline:none;resize:vertical;min-height:110px;line-height:1.8;transition:border-color .18s}
+.pta:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(7,86,165,.15)}
+.pta::placeholder{color:var(--fog)}
+.gen-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:20px 0 0;margin-top:8px;border-top:1px solid var(--rim)}
+.gen-hint{font-size:12px;color:var(--fog)}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;border-radius:var(--rs);font-family:inherit;font-size:13px;font-weight:700;border:none;cursor:pointer;transition:all .16s;white-space:nowrap}
+.btn:active{transform:scale(.96)}
+.btn-blue{background:linear-gradient(135deg,#0756A5,#0e4e96);color:#fff;box-shadow:0 4px 16px rgba(7,86,165,.4)}
+.btn-blue:hover{box-shadow:0 4px 24px rgba(7,86,165,.6);filter:brightness(1.08)}
+.btn-green{background:linear-gradient(135deg,var(--green),#0a7a55);color:#fff}
+.btn-red{background:linear-gradient(135deg,var(--red),#b01818);color:#fff}
+.btn-ghost{background:transparent;color:var(--mist);border:1.5px solid var(--rim2)}
+.btn-ghost:hover{border-color:var(--mist);color:var(--snow)}
+.btn-sm{padding:7px 14px;font-size:11px}
+.btn-xs{padding:5px 11px;font-size:11px}
+
+/* RESULTS */
+.res-tb{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:22px}
+.res-h{font-size:20px;font-weight:800}.res-h em{color:var(--blue2);font-style:normal}
+.prog{background:var(--card);border:1px solid var(--rim);border-radius:var(--r);padding:18px 22px;margin-bottom:20px;display:none}
+.prog.show{display:block}
+.prog-t{font-size:13px;font-weight:700;margin-bottom:10px}
+.prog-track{background:var(--rim);border-radius:4px;height:5px;overflow:hidden;margin-bottom:7px}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--blue2));border-radius:4px;transition:width .3s}
+.prog-note{font-size:11px;color:var(--mist)}
+.cc{background:var(--card);border:1px solid var(--rim);border-radius:var(--r);overflow:hidden;margin-bottom:28px;box-shadow:0 4px 24px rgba(0,0,0,.45);transition:box-shadow .2s}
+.cc:hover{box-shadow:0 8px 48px rgba(0,0,0,.65)}
+.cc-bar{padding:13px 18px;background:var(--card2);border-bottom:1px solid var(--rim);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.cc-name{font-size:14px;font-weight:800}
+.cc-meta{display:flex;gap:14px;flex-wrap:wrap;margin-top:3px}
+.cc-tag{font-size:11px;color:var(--mist)}.cc-tag strong{color:#e8c96e;font-weight:700}
+.cc-dl{display:flex;gap:7px}
+.cc-prev{background:#060e1a;padding:16px;display:flex;justify-content:center;overflow-x:auto}
+.cc-wrap{flex-shrink:0;overflow:hidden}
+.empty{text-align:center;padding:72px 24px;color:var(--fog)}
+.empty-ico{font-size:52px;margin-bottom:14px;opacity:.5}
+.empty-h{font-size:16px;color:var(--mist);margin-bottom:6px;font-weight:600}
+.empty-p{font-size:13px}
+
+/* TOAST */
+.toast{position:fixed;bottom:22px;right:22px;z-index:999;background:var(--card2);border:1px solid var(--rim2);border-radius:var(--r);padding:12px 18px;font-size:13px;font-weight:600;box-shadow:0 8px 48px rgba(0,0,0,.65);max-width:300px;transform:translateY(80px);opacity:0;pointer-events:none;transition:all .28s cubic-bezier(.34,1.56,.64,1)}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.ok{border-color:var(--green);color:var(--green)}
+.toast.err{border-color:var(--red);color:#f87171}
+.toast.warn{border-color:var(--amber);color:var(--amber)}
+
+@media(max-width:860px){.app{flex-direction:column}.sidebar{width:100%;position:static;height:auto;border-right:none;border-bottom:1px solid var(--rim)}.pgrid{grid-template-columns:1fr}.tb-chips{display:none}}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="tb-brand">
+    <div class="tb-gem">♟</div>
+    <div><div class="tb-name">Certificate Generator</div><div class="tb-sub">Portrait A4 · Bulk · HD · PDF &amp; JPG</div></div>
+  </div>
+  <div class="tb-chips">
+    <div class="chip on">① Setup</div>
+    <div class="chip" id="chip2">② Participants</div>
+    <div class="chip" id="chip3">③ Generate</div>
+  </div>
+</header>
+
+<div class="app">
+
+<!-- ════ SIDEBAR ════ -->
+<aside class="sidebar">
+  <div class="sec">
+    <div class="sb-lbl">Step 1</div>
+    <div class="sb-h">Certificate Setup</div>
+    <div class="sb-p">Set logos, tournament info &amp; signatories once — used on every certificate.</div>
+  </div>
+
+  <div class="sec">
+    <div class="sb-lbl">Logos (max 3 · 30 KB each)</div>
+    <div class="logo-row">
+      <div class="lbox" id="lb0"><span class="lic">🖼</span><span class="ltx">Logo 1</span><img id="lp0" src="" alt=""><button class="lrm" onclick="rmLogo(event,0)">✕</button><input type="file" accept="image/*" onchange="onLogo(0,this)"></div>
+      <div class="lbox" id="lb1"><span class="lic">🖼</span><span class="ltx">Logo 2</span><img id="lp1" src="" alt=""><button class="lrm" onclick="rmLogo(event,1)">✕</button><input type="file" accept="image/*" onchange="onLogo(1,this)"></div>
+      <div class="lbox" id="lb2"><span class="lic">🖼</span><span class="ltx">Logo 3</span><img id="lp2" src="" alt=""><button class="lrm" onclick="rmLogo(event,2)">✕</button><input type="file" accept="image/*" onchange="onLogo(2,this)"></div>
+    </div>
+    <div class="lhint">⚠ Max 30 KB per logo · PNG recommended</div>
+  </div>
+
+  <div class="divx"></div>
+
+  <div class="sec">
+    <div class="sb-lbl">Tournament Details</div>
+    <div class="fld"><label class="fl">Tournament Name <em>*</em></label><input class="fi" id="t-name" type="text" placeholder="e.g. Heaven of Kachchh Open Gujarat Rapid Chess Tournament 2026"></div>
+    <div class="fld"><label class="fl">Organized By <em>*</em></label><input class="fi" id="t-org" type="text" placeholder="e.g. Success Chess Academy Bhuj"></div>
+    <div class="fld"><label class="fl">Managed By</label><input class="fi" id="t-managed" type="text" placeholder="e.g. ChessX"></div>
+    <div class="drow">
+      <div class="fld"><label class="fl">Start Date <em>*</em></label><input class="fi" id="t-start" type="date"></div>
+      <div class="fld"><label class="fl">End Date</label><input class="fi" id="t-end" type="date"></div>
+    </div>
+    <div class="fld"><label class="fl">City / Venue <em>*</em></label><input class="fi" id="t-city" type="text" placeholder="e.g. Gandhidham, Gujarat"></div>
+  </div>
+
+  <div class="divx"></div>
+
+  <div class="sec">
+    <div class="sb-lbl">Signatories <span style="color:var(--fog);font-weight:400;font-size:9px;text-transform:none;letter-spacing:0">(min 1 · max 3)</span></div>
+    <div class="slist" id="slist"></div>
+  </div>
+</aside>
+
+<!-- ════ MAIN ════ -->
+<main class="main">
+  <div class="tab-bar">
+    <div class="tab on" onclick="switchTab('participants')">Participant Data</div>
+    <div class="tab" onclick="switchTab('results')">Certificates</div>
+  </div>
+
+  <div class="panels">
+
+    <div class="panel on" id="panel-participants">
+      <div class="pnl-top">
+        <div><div class="pnl-h">Participant Data</div><div class="pnl-p">One entry per line in each field. Line 1 across all = Certificate 1, Line 2 = Certificate 2, and so on.</div></div>
+        <div class="pna">
+          <button class="btn btn-ghost btn-sm" onclick="loadSample()">Load Sample</button>
+          <button class="btn btn-ghost btn-sm" onclick="clearAll()">Clear All</button>
+        </div>
+      </div>
+      <div class="mmal" id="mmal"><span>⚠</span><span id="mmal-msg"></span></div>
+      <div class="pgrid">
+        <div class="pc">
+          <div class="pc-hd"><div class="pc-lbl">👤 Name of Participant <span class="pc-badge">REQUIRED</span></div><div class="pc-cnt">Lines: <b id="cn-name">0</b></div></div>
+          <textarea class="pta" id="p-name" placeholder="Thacker, Varun Jagdish&#10;Shah, Riya Amit&#10;Patel, Arjun Dhiren" oninput="syncCnt(this,'cn-name');chkMM()"></textarea>
+        </div>
+        <div class="pc">
+          <div class="pc-hd"><div class="pc-lbl">📊 Points Scored <span class="pc-badge">REQUIRED</span></div><div class="pc-cnt">Lines: <b id="cn-pts">0</b></div></div>
+          <textarea class="pta" id="p-pts" placeholder="2&#10;3.5&#10;1" oninput="syncCnt(this,'cn-pts');chkMM()"></textarea>
+        </div>
+        <div class="pc">
+          <div class="pc-hd"><div class="pc-lbl">🔁 Total Rounds <span class="pc-badge">REQUIRED</span></div><div class="pc-cnt">Lines: <b id="cn-rnd">0</b></div></div>
+          <textarea class="pta" id="p-rnd" placeholder="5&#10;5&#10;5" oninput="syncCnt(this,'cn-rnd');chkMM()"></textarea>
+        </div>
+        <div class="pc">
+          <div class="pc-hd"><div class="pc-lbl">🏆 Final Rank <span class="pc-badge">REQUIRED</span></div><div class="pc-cnt">Lines: <b id="cn-rank">0</b></div></div>
+          <textarea class="pta" id="p-rank" placeholder="16&#10;4&#10;22" oninput="syncCnt(this,'cn-rank');chkMM()"></textarea>
+        </div>
+        <div class="pc" style="grid-column:1/-1">
+          <div class="pc-hd"><div class="pc-lbl">🏷 Category <span class="pc-badge">REQUIRED</span></div><div class="pc-cnt">Lines: <b id="cn-cat">0</b></div></div>
+          <textarea class="pta" id="p-cat" placeholder="Open&#10;Girls U-18&#10;Boys U-12" oninput="syncCnt(this,'cn-cat');chkMM()"></textarea>
+        </div>
+      </div>
+      <div class="gen-bar">
+        <button class="btn btn-blue" style="font-size:14px;padding:12px 30px" onclick="generate()">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          Generate Certificates
+        </button>
+        <span class="gen-hint" id="gen-hint"></span>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-results">
+      <div class="prog" id="prog">
+        <div class="prog-t" id="prog-t">Generating…</div>
+        <div class="prog-track"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+        <div class="prog-note" id="prog-note">Starting…</div>
+      </div>
+      <div id="res-root">
+        <div class="empty"><div class="empty-ico">🎓</div><div class="empty-h">No certificates yet</div><div class="empty-p">Complete setup, fill participant data, then click Generate.</div></div>
+      </div>
+    </div>
+  </div>
+</main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+// ════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════
+const logos=[null,null,null];
+const SIGS=[
+  {key:'ca', lbl:'Chief Arbiter',       name:'',sig:null,on:false},
+  {key:'td', lbl:'Tournament Director', name:'',sig:null,on:false},
+  {key:'dc', lbl:'Deputy Chief Arbiter',name:'',sig:null,on:false},
+  {key:'sp', lbl:'Sponsors',            name:'',sig:null,on:false},
+  {key:'cg', lbl:'Chief Guest',         name:'',sig:null,on:false},
+  {key:'or', lbl:'Organizer',           name:'',sig:null,on:false},
+];
+let certs=[];
+
+document.addEventListener('DOMContentLoaded',buildSigs);
+
+// ════════════════════════════════════════════
+// LOGOS
+// ════════════════════════════════════════════
+function onLogo(i,inp){
+  const f=inp.files[0];if(!f)return;
+  if(f.size>30*1024){toast('Logo '+(i+1)+' exceeds 30 KB','err');inp.value='';return;}
+  const r=new FileReader();
+  r.onload=e=>{logos[i]=e.target.result;document.getElementById('lb'+i).classList.add('has');document.getElementById('lp'+i).src=e.target.result;toast('Logo '+(i+1)+' uploaded ✓','ok');};
+  r.readAsDataURL(f);
+}
+function rmLogo(e,i){e.stopPropagation();logos[i]=null;document.getElementById('lb'+i).classList.remove('has');document.getElementById('lp'+i).src='';}
+
+// ════════════════════════════════════════════
+// SIGNATORIES
+// ════════════════════════════════════════════
+function buildSigs(){
+  const list=document.getElementById('slist');list.innerHTML='';
+  SIGS.forEach((s,i)=>{
+    const d=document.createElement('div');d.className='si'+(s.on?' on':'');d.id='si'+i;
+    d.innerHTML=`
+      <div class="si-hd" onclick="togSig(${i})">
+        <input type="checkbox" ${s.on?'checked':''} onclick="togSig(${i});event.stopPropagation()">
+        <span class="si-name" id="sn${i}">${s.lbl}</span>
+        ${s.on?'<span class="si-pill">ACTIVE</span>':''}
+      </div>
+      <div class="si-body">
+        <div class="fld" style="margin-bottom:0"><label class="fl">Label Name</label>
+          <input class="fi" type="text" value="${s.lbl}" placeholder="e.g. Chief Arbiter" oninput="SIGS[${i}].lbl=this.value;document.getElementById('sn${i}').textContent=this.value"></div>
+        <div class="fld" style="margin-bottom:0"><label class="fl">Person Name</label>
+          <input class="fi" type="text" value="${s.name}" placeholder="Full name on certificate" oninput="SIGS[${i}].name=this.value"></div>
+        <div class="fld" style="margin-bottom:0">
+          <label class="fl">Signature Image <span style="color:var(--fog);font-weight:400">(optional · max 30 KB)</span></label>
+          <div class="sig-up ${s.sig?'has':''}" id="su${i}">
+            ${s.sig?`<img src="${s.sig}" alt="sig">`:'<span class="sig-ph">✍ Click to upload signature</span>'}
+            <input type="file" accept="image/*" onchange="onSig(${i},this)">
+          </div>
+          ${s.sig?`<button class="sig-rm" onclick="rmSig(${i})">✕ Remove</button>`:''}
+        </div>
+      </div>`;
+    list.appendChild(d);
+  });
+}
+function togSig(i){
+  const active=SIGS.filter(s=>s.on);
+  if(!SIGS[i].on&&active.length>=3){toast('Maximum 3 signatories allowed','warn');return;}
+  SIGS[i].on=!SIGS[i].on;buildSigs();
+}
+function onSig(i,inp){
+  const f=inp.files[0];if(!f)return;
+  if(f.size>30*1024){toast('Signature exceeds 30 KB','err');return;}
+  const r=new FileReader();r.onload=e=>{SIGS[i].sig=e.target.result;buildSigs();toast('Signature uploaded ✓','ok');};r.readAsDataURL(f);
+}
+function rmSig(i){SIGS[i].sig=null;buildSigs();}
+
+// ════════════════════════════════════════════
+// PARTICIPANT DATA
+// ════════════════════════════════════════════
+function getLines(id){const v=document.getElementById(id).value.trim();if(!v)return[];return v.split('\n').map(l=>l.trim()).filter(Boolean);}
+function syncCnt(ta,cid){
+  const n=ta.value.trim().split('\n').filter(l=>l.trim()).length;
+  document.getElementById(cid).textContent=n;
+  const names=getLines('p-name');
+  document.getElementById('gen-hint').textContent=names.length>0?`${names.length} certificate${names.length>1?'s':''} will be generated`:'';
+}
+function chkMM(){
+  const counts=['p-name','p-pts','p-rnd','p-rank','p-cat'].map(id=>getLines(id).length).filter(c=>c>0);
+  const box=document.getElementById('mmal');
+  if(counts.length<2){box.classList.remove('show');return;}
+  if(!counts.every(c=>c===counts[0])){
+    document.getElementById('mmal-msg').textContent=`Line count mismatch — Names:${getLines('p-name').length} Points:${getLines('p-pts').length} Rounds:${getLines('p-rnd').length} Rank:${getLines('p-rank').length} Category:${getLines('p-cat').length}`;
+    box.classList.add('show');
+  }else{box.classList.remove('show');}
+}
+function loadSample(){
+  document.getElementById('p-name').value='Thacker, Varun Jagdish\nShah, Riya Amit\nPatel, Arjun Dhiren\nMehta, Kavya Suresh\nJoshi, Dev Prakash';
+  document.getElementById('p-pts').value='2\n3.5\n1\n4\n2.5';
+  document.getElementById('p-rnd').value='5\n5\n5\n5\n5';
+  document.getElementById('p-rank').value='16\n4\n22\n2\n11';
+  document.getElementById('p-cat').value='Open\nGirls U-18\nOpen\nBoys U-12\nOpen';
+  [['p-name','cn-name'],['p-pts','cn-pts'],['p-rnd','cn-rnd'],['p-rank','cn-rank'],['p-cat','cn-cat']].forEach(([id,cid])=>syncCnt(document.getElementById(id),cid));
+  chkMM();toast('Sample data loaded','ok');
+}
+function clearAll(){
+  ['p-name','p-pts','p-rnd','p-rank','p-cat'].forEach(id=>document.getElementById(id).value='');
+  ['cn-name','cn-pts','cn-rnd','cn-rank','cn-cat'].forEach(id=>document.getElementById(id).textContent='0');
+  document.getElementById('mmal').classList.remove('show');
+  document.getElementById('gen-hint').textContent='';
+}
+
+// ════════════════════════════════════════════
+// VALIDATION
+// ════════════════════════════════════════════
+function validate(){
+  const e=[];
+  if(!document.getElementById('t-name').value.trim()) e.push('Tournament Name is required');
+  if(!document.getElementById('t-org').value.trim()) e.push('Organized By is required');
+  if(!document.getElementById('t-start').value) e.push('Start Date is required');
+  if(!document.getElementById('t-city').value.trim()) e.push('City / Venue is required');
+  if(!SIGS.some(s=>s.on)) e.push('Select at least 1 signatory in the sidebar');
+  if(!getLines('p-name').length) e.push('Add at least one participant name');
+  const counts=['p-name','p-pts','p-rnd','p-rank','p-cat'].map(id=>getLines(id).length).filter(c=>c>0);
+  if(counts.length>1&&!counts.every(c=>c===counts[0])) e.push('All participant fields must have same number of lines');
+  return e;
+}
+
+// ════════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════════
+function ordinal(n){const num=parseInt(n)||0;const s=['th','st','nd','rd'],v=num%100;return num+(s[(v-20)%10]||s[v]||s[0]);}
+function fmtDate(str){if(!str)return'';return new Date(str+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});}
+function safe(n){return(n||'Certificate').replace(/[^a-z0-9\-_, .]/gi,'_').trim();}
+const IC={};
+function loadImg(src){
+  if(IC[src])return Promise.resolve(IC[src]);
+  return new Promise((res,rej)=>{const i=new Image();i.onload=()=>{IC[src]=i;res(i);};i.onerror=rej;i.src=src;});
+}
+
+// ════════════════════════════════════════════
+// GENERATE
+// ════════════════════════════════════════════
+async function generate(){
+  const errs=validate();if(errs.length){toast(errs[0],'err');return;}
+  switchTab('results');
+  const names=getLines('p-name'),pts=getLines('p-pts'),rnds=getLines('p-rnd'),ranks=getLines('p-rank'),cats=getLines('p-cat');
+  const total=names.length;
+  const T={name:document.getElementById('t-name').value.trim(),org:document.getElementById('t-org').value.trim(),managed:document.getElementById('t-managed').value.trim(),start:fmtDate(document.getElementById('t-start').value),end:fmtDate(document.getElementById('t-end').value),city:document.getElementById('t-city').value.trim()};
+  const activeSigs=SIGS.filter(s=>s.on);
+  const activeLogos=logos.filter(Boolean);
+
+  const pb=document.getElementById('prog');
+  const fill=document.getElementById('prog-fill');
+  const pt=document.getElementById('prog-t');
+  const pn=document.getElementById('prog-note');
+  pb.classList.add('show');fill.style.width='0%';
+  const root=document.getElementById('res-root');root.innerHTML='';certs=[];
+
+  const tb=document.createElement('div');tb.className='res-tb';
+  tb.innerHTML=`<div class="res-h"><em>${total}</em> Certificate${total>1?'s':''}</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-green btn-sm" onclick="dlAll('jpg')">⬇ All JPG</button><button class="btn btn-red btn-sm" onclick="dlAll('pdf')">⬇ All PDF</button></div>`;
+  root.appendChild(tb);
+
+  for(let i=0;i<total;i++){
+    fill.style.width=((i/total)*100)+'%';
+    pt.textContent=`Generating ${i+1} of ${total}…`;
+    pn.textContent=names[i]||'Certificate '+(i+1);
+    await new Promise(r=>setTimeout(r,10));
+
+    const D={name:names[i]||'',pts:pts[i]||'0',rnds:rnds[i]||'0',rank:ranks[i]||'0',cat:cats[i]||''};
+    const canvas=document.createElement('canvas');
+    await drawCert(canvas,T,D,activeSigs,activeLogos);
+    certs.push({canvas,name:D.name});
+
+    const card=document.createElement('div');card.className='cc';
+    card.innerHTML=`
+      <div class="cc-bar">
+        <div><div class="cc-name">${D.name||'Participant '+(i+1)}</div>
+        <div class="cc-meta"><span class="cc-tag">Rank <strong>${ordinal(D.rank)}</strong></span><span class="cc-tag">Points <strong>${D.pts}/${D.rnds}</strong></span><span class="cc-tag">Category <strong>${D.cat}</strong></span></div></div>
+        <div class="cc-dl"><button class="btn btn-green btn-xs" onclick="dlOne(${i},'jpg')">⬇ JPG</button><button class="btn btn-red btn-xs" onclick="dlOne(${i},'pdf')">⬇ PDF</button></div>
+      </div>
+      <div class="cc-prev"><div class="cc-wrap" id="cw${i}"></div></div>`;
+    root.appendChild(card);
+
+    const wrap=document.getElementById('cw'+i);
+    const avail=Math.min(500,(wrap.closest('.cc-prev').clientWidth||600)-32);
+    const sc=avail/1240;
+    canvas.style.cssText=`width:1240px;height:1754px;transform:scale(${sc});transform-origin:top left;display:block`;
+    wrap.style.cssText=`width:${avail}px;height:${Math.round(1754*sc)}px;overflow:hidden`;
+    wrap.appendChild(canvas);
+  }
+
+  fill.style.width='100%';pt.textContent='Done!';pn.textContent=`${total} certificate${total>1?'s':''} ready.`;
+  setTimeout(()=>pb.classList.remove('show'),2000);
+  toast(`${total} certificate${total>1?'s':''} generated!`,'ok');
+}
+
+// ════════════════════════════════════════════════════════════
+// DRAW CERTIFICATE — Portrait A4 (1240 x 1754px) 
+// Exact pixel positions from PPTX slide2 analysis
+// ════════════════════════════════════════════════════════════
+const BG_TEXTURE='data:image/jpeg;base64,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';
+
+async function drawCert(canvas,T,D,activeSigs,activeLogos){
+  // Canvas: 1240 x 1754 (Portrait A4 at 150dpi)
+  const W=1240, H=1754;
+  canvas.width=W; canvas.height=H;
+  const ctx=canvas.getContext('2d');
+
+  // ── ZONE: Full blue outer background ──
+  ctx.fillStyle='#0756A5';
+  ctx.fillRect(0,0,W,H);
+
+  // ── White inner panel ──
+  // From PPTX: x=53 y=67 w=1131 h=1630
+  const PX=53, PY=67, PW=1131, PH=1630;
+  // Paper texture
+  try{const tex=await loadImg(BG_TEXTURE);ctx.drawImage(tex,PX,PY,PW,PH);}catch(e){}
+  ctx.fillStyle='rgba(255,255,255,0.88)';
+  ctx.fillRect(PX,PY,PW,PH);
+
+  // ═══════════════════════════════════════
+  // ZONE 1 — TOP LOGO AREA (blank white)
+  // y: 67 to 371 = 304px tall
+  // ═══════════════════════════════════════
+  const LOGO_ZONE_Y = PY;
+  const LOGO_ZONE_H = 304; // blank for logos
+  const LOGO_H = 200;
+  const LOGO_Y = PY + 52;
+
+  const aLogos=activeLogos.filter(Boolean);
+  if(aLogos.length===1){
+    await drawLogo(ctx,aLogos[0],PX+PW/2,LOGO_Y,LOGO_H,'center');
+  } else if(aLogos.length===2){
+    await drawLogo(ctx,aLogos[0],PX+160,LOGO_Y,LOGO_H,'left');
+    await drawLogo(ctx,aLogos[1],PX+PW-160,LOGO_Y,LOGO_H,'right');
+  } else if(aLogos.length===3){
+    await drawLogo(ctx,aLogos[0],PX+120,LOGO_Y,LOGO_H,'left');
+    await drawLogo(ctx,aLogos[1],PX+PW/2,LOGO_Y,LOGO_H,'center');
+    await drawLogo(ctx,aLogos[2],PX+PW-120,LOGO_Y,LOGO_H,'right');
+  }
+
+  // ── Blue horizontal divider line (below logo zone) ──
+  // From PPTX: y=371
+  const DIV1_Y = 371;
+  ctx.strokeStyle='#0756A5'; ctx.lineWidth=5;
+  hline(ctx, PX+18, DIV1_Y, PX+PW-18);
+
+  // ═══════════════════════════════════════
+  // ZONE 2 — CERTIFICATE HEADING + NAME + BLUE BOX RIGHT
+  // y: 371 to 726
+  // ═══════════════════════════════════════
+
+  // ── Blue box (right side, profile photo reserved) ──
+  // From PPTX: x=876 y=390 w=279 h=303
+  const BBX=876, BBY=390, BBW=279, BBH=303;
+  ctx.fillStyle='#0756A5';
+  ctx.fillRect(BBX, BBY, BBW, BBH);
+  // White frame inside blue box (photo placeholder)
+  // From PPTX: x=893 y=404 w=244 h=287
+  ctx.fillStyle='#FFFFFF';
+  ctx.fillRect(893, 404, 244, 287);
+  // Blue border around white frame
+  ctx.strokeStyle='#0756A5'; ctx.lineWidth=3;
+  ctx.strokeRect(893, 404, 244, 287);
+  // "PHOTO" placeholder text
+  ctx.font='bold 18px Inter,sans-serif';
+  ctx.fillStyle='rgba(7,86,165,0.3)';
+  ctx.textAlign='center';
+  ctx.fillText('PHOTO', 893+122, 404+150);
+
+  // ── "CERTIFICATE OF PARTICIPATION" (left-center, 2 lines) ──
+  // From PPTX: x=72 y=405, centred in left portion (not full width)
+  // Left portion width = BBX - PX - 20 = 876-53-20 = 803
+  const LEFT_CX = PX + 803/2; // center of left area
+  ctx.font='bold 43px Inter,sans-serif';
+  ctx.fillStyle='#052A6E';
+  ctx.textAlign='center';
+  ctx.letterSpacing='1px';
+  // Split into two lines as in PPTX
+  ctx.fillText('CERTIFICATE OF', LEFT_CX, 440);
+  ctx.fillText('PARTICIPATION', LEFT_CX, 493);
+  ctx.letterSpacing='0px';
+
+  // ── "This is to certify that" ──
+  // From PPTX: y=485+~50 = below heading
+  ctx.font='bold italic 38px Inter,sans-serif';
+  ctx.fillStyle='#0756A5';
+  ctx.textAlign='center';
+  ctx.fillText('This is to certify that', LEFT_CX, 548);
+
+  // ── NAME AREA — underline with name ──
+  // From PPTX: y=652, spans almost full width of left area
+  const NAME_LINE_Y = 645;
+  const NAME_LINE_X1 = PX+20;
+  const NAME_LINE_X2 = BBX-20;
+  const NAME_CX = (NAME_LINE_X1+NAME_LINE_X2)/2;
+
+  // Auto-shrink name font
+  let nfs=60;
+  ctx.font=`bold italic ${nfs}px Inter,sans-serif`;
+  const maxNameW = NAME_LINE_X2 - NAME_LINE_X1 - 20;
+  while(ctx.measureText(D.name).width > maxNameW && nfs>28){nfs-=2;ctx.font=`bold italic ${nfs}px Inter,sans-serif`;}
+  ctx.fillStyle='#5170FF';
+  ctx.textAlign='center';
+  ctx.fillText(D.name, NAME_CX, NAME_LINE_Y);
+
+  // Underline for name
+  ctx.strokeStyle='#5170FF'; ctx.lineWidth=3;
+  hline(ctx, NAME_LINE_X1, NAME_LINE_Y+12, NAME_LINE_X2);
+
+  // ── Blue divider line below Zone 2 ──
+  // From PPTX: y=726
+  const DIV2_Y = 726;
+  ctx.strokeStyle='#0756A5'; ctx.lineWidth=4;
+  hline(ctx, PX+18, DIV2_Y, PX+PW-18);
+
+  // ═══════════════════════════════════════
+  // ZONE 3 — LABELS + ANSWERS TABLE
+  // y: 726 to ~1393
+  // Layout: Label column (right-aligned) | Answer underline column
+  // From PPTX: labels at x=81 w=168 (right-aligned text)
+  //            answers at x=250 w=905
+  // ═══════════════════════════════════════
+  const LBL_X   = PX+30;   // label column left edge
+  const LBL_W   = 180;     // label column width
+  const ANS_X   = PX+222;  // answer start x
+  const ANS_W   = PX+PW-ANS_X-18; // answer column width
+  const ROW_H   = 56;      // height per row
+  const ZONE3_Y = DIV2_Y + 28;
+  const FONT_LBL = 'bold 24px Inter,sans-serif';
+  const FONT_ANS = 'bold 24px Inter,sans-serif';
+  const LBL_COLOR = '#0756A5';
+  const ANS_COLOR = '#5170FF';
+
+  const rows=[
+    {lbl:'Tournament',  val:T.name},
+    {lbl:'Organised By',val:T.org},
+    {lbl:'Managed By',  val:T.managed||'—'},
+    {lbl:'Start Date',  val:T.start},
+    {lbl:'End Date',    val:T.end||'—'},
+    {lbl:'City',        val:T.city},
+    {lbl:'Points',      val:D.pts},
+    {lbl:'Rounds',      val:D.rnds},
+    {lbl:'Rank',        val:ordinal(D.rank)},
+    {lbl:'Category',    val:D.cat},
+  ];
+
+  rows.forEach((row,i)=>{
+    const rowY = ZONE3_Y + i*ROW_H;
+    const textY = rowY + 36;
+    const lineY = rowY + 42;
+
+    // Label (right-aligned in label column)
+    ctx.font=FONT_LBL;
+    ctx.fillStyle=LBL_COLOR;
+    ctx.textAlign='right';
+    ctx.fillText(row.lbl, LBL_X+LBL_W, textY);
+
+    // Answer text (left-aligned, blue)
+    ctx.font=FONT_ANS;
+    ctx.fillStyle=ANS_COLOR;
+    ctx.textAlign='left';
+    // Auto-shrink if too long
+    let afs=24;
+    ctx.font=`bold ${afs}px Inter,sans-serif`;
+    while(ctx.measureText(row.val||'').width>ANS_W-10 && afs>14){afs-=1;ctx.font=`bold ${afs}px Inter,sans-serif`;}
+    ctx.fillText(row.val||'', ANS_X+10, textY);
+
+    // Answer underline
+    ctx.strokeStyle='#0756A5'; ctx.lineWidth=1.8;
+    hline(ctx, ANS_X, lineY, ANS_X+ANS_W);
+  });
+
+  // ── Appreciation text ──
+  // From PPTX: y=1166
+  const APP_Y = ZONE3_Y + rows.length*ROW_H + 24;
+  ctx.font='bold italic 26px Inter,sans-serif';
+  ctx.fillStyle='#0756A5';
+  ctx.textAlign='left';
+  const appText1='We sincerely appreciate your participation, sportsmanship, and dedication';
+  const appText2='to the game of chess. We wish you continued success in all your future tournaments.';
+  ctx.fillText(appText1, PX+30, APP_Y);
+  ctx.fillText(appText2, PX+30, APP_Y+38);
+
+  // ═══════════════════════════════════════
+  // ZONE 4 — SIGNATURES
+  // From PPTX: mid_h_line y=1393, sig lines y=1560
+  // ═══════════════════════════════════════
+  const MID_LINE_Y = APP_Y + 80;
+  ctx.strokeStyle='#0756A5'; ctx.lineWidth=3;
+  hline(ctx, PX+18, MID_LINE_Y, PX+PW-18);
+
+  await drawSigs(ctx, activeSigs, W, H, PX, PY, PW, PH, MID_LINE_Y);
+}
+
+// ─── Line helper ───
+function hline(ctx,x1,y,x2){ctx.beginPath();ctx.moveTo(x1,y);ctx.lineTo(x2,y);ctx.stroke();}
+
+// ─── Logo helper ───
+async function drawLogo(ctx,src,x,y,h,align){
+  try{
+    const img=await loadImg(src);
+    const w=(img.width/img.height)*h;
+    const dx=align==='center'?x-w/2:align==='right'?x-w:x;
+    ctx.drawImage(img,dx,y,w,h);
+  }catch(e){}
+}
+
+// ─── Signatories ───
+async function drawSigs(ctx,sigs,W,H,PX,PY,PW,PH,midLineY){
+  if(!sigs.length)return;
+  const n=sigs.length;
+  const sigZoneH = PY+PH - midLineY; // available height
+  const SIG_LINE_Y = midLineY + sigZoneH*0.55;
+  const NAME_Y = SIG_LINE_Y + 30;
+  const LBL_Y  = SIG_LINE_Y + 62;
+  const sigW = PW/n;
+
+  for(let i=0;i<n;i++){
+    const s=sigs[i];
+    const scx = PX + sigW*i + sigW/2;
+    const lineX1 = PX + sigW*i + sigW*0.1;
+    const lineX2 = PX + sigW*i + sigW*0.9;
+
+    // Signature image above line
+    if(s.sig){
+      try{
+        const img=await loadImg(s.sig);
+        const sh=90, sw=(img.width/img.height)*sh;
+        ctx.drawImage(img, scx-sw/2, SIG_LINE_Y-sh-8, sw, sh);
+      }catch(e){}
+    }else{
+      // Dashed placeholder
+      ctx.save();ctx.strokeStyle='rgba(7,86,165,0.2)';ctx.lineWidth=1.2;
+      ctx.setLineDash([5,4]);
+      ctx.beginPath();ctx.moveTo(scx-70,SIG_LINE_Y-50);ctx.lineTo(scx+70,SIG_LINE_Y-50);ctx.stroke();
+      ctx.setLineDash([]);ctx.restore();
+    }
+
+    // Sig line
+    ctx.strokeStyle='#0756A5'; ctx.lineWidth=2.5;
+    hline(ctx, lineX1, SIG_LINE_Y, lineX2);
+
+    // Person name — dark navy, clearly visible
+    ctx.textAlign='center';
+    ctx.fillStyle='#052A6E';
+    let nfs=24;
+    ctx.font=`bold ${nfs}px Inter,sans-serif`;
+    while(ctx.measureText(s.name||'').width>sigW-30&&nfs>14){nfs--;ctx.font=`bold ${nfs}px Inter,sans-serif`;}
+    ctx.fillText(s.name||'', scx, NAME_Y);
+
+    // Label — blue, visible
+    ctx.font='bold 22px Inter,sans-serif';
+    ctx.fillStyle='#0756A5';
+    ctx.fillText('('+s.lbl+')', scx, LBL_Y);
+  }
+}
+
+// ════════════════════════════════════════════
+// DOWNLOAD
+// ════════════════════════════════════════════
+function dlOne(i,fmt){
+  const{canvas,name}=certs[i];
+  if(fmt==='jpg'){
+    const a=document.createElement('a');a.download='Certificate_'+safe(name)+'.jpg';a.href=canvas.toDataURL('image/jpeg',0.97);a.click();
+  }else{
+    const{jsPDF}=window.jspdf;
+    // A4 portrait: 210mm x 297mm
+    const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    pdf.addImage(canvas.toDataURL('image/jpeg',0.97),'JPEG',0,0,210,297);
+    pdf.save('Certificate_'+safe(name)+'.pdf');
+  }
+}
+async function dlAll(fmt){
+  if(!certs.length){toast('No certificates yet','warn');return;}
+  toast(`Downloading ${certs.length} ${fmt.toUpperCase()} files…`,'ok');
+  for(let i=0;i<certs.length;i++){dlOne(i,fmt);await new Promise(r=>setTimeout(r,350));}
+}
+
+// ════════════════════════════════════════════
+// UI
+// ════════════════════════════════════════════
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.querySelector(`.tab[onclick="switchTab('${name}')"]`).classList.add('on');
+  document.getElementById('panel-'+name).classList.add('on');
+}
+let _tt;
+function toast(msg,type){
+  const el=document.getElementById('toast');
+  el.textContent=(type==='ok'?'✓ ':type==='err'?'✕ ':'⚠ ')+msg;
+  el.className='toast show '+(type||'');
+  clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('show'),3400);
+}
+</script>
+</body>
+</html>
