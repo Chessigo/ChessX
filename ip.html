@@ -1,0 +1,1866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>IP Database | ChessX</title>
+<style>
+:root{
+  --blue-dark:#0d1b6e;--blue-mid:#1a3fad;--blue-accent:#1565C0;--sky:#29b6f6;
+  --bg:#f0f4ff;--border:#c5d3f0;--text:#111827;--muted:#6b7280;
+  --red:#dc2626;--green:#16a34a;--gold:#d97706;--platinum:#7c3aed;
+  --c-titled:#7c3aed;--c-rated:#16a34a;--c-arena:#ea580c;--c-arbiter:#dc2626;--c-trainer:#1a3fad;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+.pageHeader{background:#fff;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(13,27,110,.10);border-bottom:2px solid var(--border);flex-wrap:wrap;gap:10px;}
+.pageHeader .left{display:flex;align-items:center;gap:12px;}
+.pageHeader img{height:52px;flex-shrink:0;}
+.pageHeader h1{font-size:1.05rem;font-weight:700;color:var(--blue-dark);}
+.pageHeader p{font-size:.72rem;color:var(--muted);}
+.headerRight{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.btnAdmin{background:linear-gradient(90deg,var(--blue-dark),var(--blue-accent));color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:.78rem;font-weight:700;cursor:pointer;transition:opacity .2s;white-space:nowrap;}
+.btnAdmin:hover{opacity:.85;}
+.btnLogout{background:linear-gradient(90deg,var(--red),#b91c1c);}
+.adminInfo{font-size:.75rem;color:var(--green);font-weight:700;white-space:nowrap;}
+
+.filterBar{max-width:1300px;margin:14px auto 0;padding:0 12px;}
+.filterToggle{display:flex;align-items:center;justify-content:space-between;background:#fff;border:1.5px solid var(--border);border-radius:10px;padding:10px 16px;cursor:pointer;user-select:none;}
+.filterToggle span{font-size:.88rem;font-weight:600;color:var(--blue-dark);}
+.toggleIcon{width:28px;height:28px;background:var(--blue-dark);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:700;transition:transform .3s;}
+.toggleIcon.open{transform:rotate(45deg);}
+.filterPanel{display:none;background:#fff;border:1.5px solid var(--border);border-top:none;border-radius:0 0 10px 10px;padding:16px;}
+.filterPanel.open{display:block;}
+.filterGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-bottom:12px;}
+.filterItem label{display:block;font-size:.7rem;font-weight:700;color:var(--blue-dark);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;}
+.filterItem input,.filterItem select{width:100%;border:1.5px solid var(--border);border-radius:7px;padding:8px 10px;font-size:.82rem;outline:none;background:#fff;}
+.filterItem input:focus,.filterItem select:focus{border-color:var(--blue-accent);}
+.searchFull{grid-column:1/-1;}
+.byearRow{display:flex;gap:6px;align-items:center;}
+.byearRow input{flex:1;}
+.byearRow span{font-size:.8rem;color:var(--muted);}
+.filterActions{display:flex;gap:10px;flex-wrap:wrap;}
+.btnReset{padding:8px 20px;border-radius:7px;font-size:.82rem;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:#f9fafb;color:var(--text);}
+.btnReset:hover{background:#e5e7eb;}
+.btnDelete{padding:8px 20px;border-radius:7px;font-size:.82rem;font-weight:600;cursor:pointer;border:none;background:var(--red);color:#fff;display:none;}
+.btnDelete:hover{opacity:.85;}
+
+.statsBar{max-width:1300px;margin:10px auto 0;padding:0 12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;}
+.statsBar .count{font-size:.82rem;color:var(--muted);}
+.statsBar .count strong{color:var(--blue-dark);}
+.sortBar{display:flex;gap:8px;flex-wrap:wrap;}
+.sortBar label{font-size:.72rem;color:var(--muted);}
+.sortBar select{border:1.5px solid var(--border);border-radius:6px;padding:5px 8px;font-size:.75rem;outline:none;}
+
+.tableWrap{max-width:1300px;margin:8px auto 30px;padding:0 12px;overflow-x:auto;contain:layout style;}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(13,27,110,.08);font-size:.78rem;min-width:900px;will-change:auto;}
+thead{position:sticky;top:0;z-index:10;}
+thead tr{background:linear-gradient(90deg,var(--blue-dark),var(--blue-accent));color:#fff;}
+th{padding:10px 8px;text-align:left;font-size:.68rem;letter-spacing:.7px;white-space:nowrap;text-transform:uppercase;cursor:pointer;user-select:none;}
+th:hover{background:rgba(255,255,255,.15);}
+td{padding:9px 8px;border-bottom:1px solid #f0f4ff;vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tbody tr{transition:background .15s;}
+tbody tr:hover td{background:#f5f8ff;}
+
+.skRow td{padding:10px 8px;}
+.skCell{height:14px;background:linear-gradient(90deg,#e5e7eb 25%,#f3f4f6 50%,#e5e7eb 75%);background-size:200% 100%;border-radius:4px;animation:shimmer 1.4s infinite;}
+@keyframes shimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
+@keyframes fadeInRow{from{opacity:0;transform:translateX(-6px);}to{opacity:1;transform:translateX(0);}}
+.rowAnim{animation:fadeInRow .3s ease both;}
+
+tr.rowGold td{background:linear-gradient(90deg,#fffbeb,#fef3c7,#fffbeb)!important;}
+tr.rowGold td:first-child{border-left:4px solid #d97706;}
+@keyframes goldGlow{0%,100%{box-shadow:0 0 6px 2px rgba(217,119,6,.3);}50%{box-shadow:0 0 14px 4px rgba(217,119,6,.6);}}
+tr.rowGold{animation:goldGlow 2s ease-in-out infinite;}
+tr.rowPlatinum td{background:linear-gradient(90deg,#f5f3ff,#ede9fe,#f5f3ff)!important;}
+tr.rowPlatinum td:first-child{border-left:4px solid #7c3aed;}
+@keyframes platGlow{0%,100%{box-shadow:0 0 5px 1px rgba(124,58,237,.2);}50%{box-shadow:0 0 12px 3px rgba(124,58,237,.45);}}
+tr.rowPlatinum{animation:platGlow 2.5s ease-in-out infinite;}
+
+.chipList{display:flex;flex-wrap:wrap;gap:3px;}
+.chip{border-radius:4px;padding:3px 7px;font-size:.72rem;font-weight:700;white-space:nowrap;display:inline-flex;align-items:center;gap:2px;}
+.chip-titled{background:#f3e8ff;color:var(--c-titled);}
+.chip-rated{background:#dcfce7;color:var(--c-rated);}
+.chip-arena{background:#fff7ed;color:var(--c-arena);}
+.chip-arbiter{background:#fee2e2;color:var(--c-arbiter);}
+.chip-trainer{background:#dbeafe;color:var(--c-trainer);}
+.fideLink{color:var(--blue-accent);text-decoration:none;font-weight:600;}
+.fideLink:hover{text-decoration:underline;}
+.btnProfile{background:linear-gradient(90deg,var(--blue-dark),var(--blue-accent));color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:.72rem;font-weight:600;cursor:pointer;transition:opacity .2s;white-space:nowrap;}
+.btnProfile:hover{opacity:.85;}
+.diamondBadge,.goldBadge{font-size:.8rem;margin-left:3px;}
+.cbSelect{width:16px;height:16px;cursor:pointer;}
+tr.selected td{background:#fef3c7!important;}
+
+.adminCols{display:none;}
+body.adminMode .adminCols{display:table-cell!important;}
+.waBtn{background:linear-gradient(90deg,#25d366,#128c7e);color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:.72rem;font-weight:600;cursor:pointer;white-space:nowrap;transition:opacity .2s;}
+.waBtn:hover{opacity:.85;}
+.copyCell{cursor:pointer;position:relative;min-width:90px;white-space:nowrap;}
+.copyCell .copyBtn{display:inline-flex;align-items:center;justify-content:center;background:var(--blue-dark);color:#fff;border:none;border-radius:4px;padding:2px 7px;font-size:.65rem;font-weight:700;cursor:pointer;margin-left:5px;vertical-align:middle;white-space:nowrap;transition:opacity .15s;}
+.copyCell .copyBtn:hover{opacity:.8;}
+
+.pagination{display:flex;gap:6px;justify-content:center;align-items:center;margin:14px 0 30px;flex-wrap:wrap;}
+.pagination button{border:1.5px solid var(--border);background:#fff;color:var(--blue-dark);border-radius:6px;padding:7px 13px;font-size:.8rem;cursor:pointer;font-weight:600;}
+.pagination button.active{background:var(--blue-dark);color:#fff;border-color:var(--blue-dark);}
+.pagination button:hover:not(.active){background:#e8efff;}
+.pagination .dots{color:var(--muted);padding:0 4px;}
+#backToTop{position:fixed;bottom:24px;right:20px;background:var(--blue-dark);color:#fff;border:none;border-radius:50%;width:42px;height:42px;font-size:1.2rem;cursor:pointer;box-shadow:0 4px 12px rgba(13,27,110,.3);display:none;align-items:center;justify-content:center;z-index:500;}
+#backToTop.visible{display:flex;}
+.noData{text-align:center;padding:48px;color:var(--muted);font-size:.9rem;}
+
+/* MODALS */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9000;display:none;align-items:center;justify-content:center;padding:16px;}
+.modal-overlay.open{display:flex;}
+.modal-card{background:#fff;border-radius:14px;width:100%;max-width:420px;padding:28px 24px;box-shadow:0 10px 40px rgba(0,0,0,.3);}
+.modal-card h3{font-size:1rem;font-weight:800;color:var(--blue-dark);margin-bottom:18px;text-align:center;}
+.field-label{font-size:.7rem;font-weight:700;color:var(--blue-dark);display:block;margin-bottom:4px;text-transform:uppercase;}
+.field-input{width:100%;border:1.5px solid var(--border);border-radius:7px;padding:9px 12px;font-size:.85rem;outline:none;margin-bottom:10px;}
+.field-input:focus{border-color:var(--blue-accent);}
+.modal-err{color:var(--red);font-size:.75rem;margin-bottom:8px;display:none;}
+.modal-btns{display:flex;gap:10px;}
+.btn-primary{flex:1;background:linear-gradient(90deg,var(--blue-dark),var(--blue-accent));color:#fff;border:none;border-radius:8px;padding:10px;font-size:.85rem;font-weight:700;cursor:pointer;}
+.btn-danger{flex:1;background:#dc2626;color:#fff;border:none;border-radius:8px;padding:10px;font-size:.85rem;font-weight:700;cursor:pointer;}
+.btn-cancel{flex:1;background:#f3f4f6;border:1.5px solid var(--border);border-radius:8px;padding:10px;font-size:.85rem;font-weight:600;cursor:pointer;color:var(--text);}
+
+@media(max-width:600px){th,td{padding:7px 5px;font-size:.68rem;}}
+
+/* PROFILE POPUP */
+#profilePopup{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:9500;display:none;align-items:flex-start;justify-content:center;padding:10px;overflow-y:auto;}
+#profilePopup.open{display:flex;}
+.ppInner{background:#fff;border-radius:14px;width:100%;max-width:660px;margin:auto;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.4);position:relative;}
+.ppClose{position:absolute;top:10px;right:12px;background:rgba(255,255,255,.2);border:none;color:#fff;font-size:1.1rem;width:30px;height:30px;border-radius:50%;cursor:pointer;z-index:10;display:flex;align-items:center;justify-content:center;}
+.ppClose:hover{background:rgba(255,255,255,.35);}
+.ppHero{background:linear-gradient(135deg,#0d1b6e,#1565C0);padding:26px 20px 18px;text-align:center;position:relative;}
+.ppPhoto{width:92px;height:92px;border-radius:12px;border:3px solid rgba(255,255,255,.5);background:#ffffff;margin:0 auto 11px;display:flex;align-items:center;justify-content:center;font-size:2.4rem;overflow:hidden;}
+.ppPhoto img{width:100%;height:100%;object-fit:cover;}
+.ppName{color:#fff;font-size:1.4rem;font-weight:900;margin-bottom:5px;text-shadow:0 1px 3px rgba(0,0,0,.3);}
+.ppIdLine{color:rgba(255,255,255,.82);font-size:.86rem;}
+.ppIdLine a{color:#fff!important;font-weight:900;text-decoration:none;border-bottom:2px solid rgba(255,255,255,.6);}
+.ppMemBadge{display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,.17);color:#fff;border-radius:20px;padding:3px 13px;font-size:.77rem;font-weight:700;margin-top:5px;}
+.ppRatings{display:grid;grid-template-columns:1fr 1fr 1fr;}
+.ppRBox{padding:13px 8px;text-align:center;border-right:1px solid var(--border);}
+.ppRBox:last-child{border-right:none;}
+.ppRBox:nth-child(1){background:linear-gradient(135deg,#fff7ed,#fef3c7);}
+.ppRBox:nth-child(2){background:linear-gradient(135deg,#f0fdf4,#dcfce7);}
+.ppRBox:nth-child(3){background:linear-gradient(135deg,#eff6ff,#dbeafe);}
+.ppRLabel{font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px;}
+.ppRBox:nth-child(1) .ppRLabel{color:#92400e;}
+.ppRBox:nth-child(2) .ppRLabel{color:#14532d;}
+.ppRBox:nth-child(3) .ppRLabel{color:#1e3a5f;}
+.ppRVal{font-size:1.35rem;font-weight:800;color:#0d1b6e;}
+.ppRNR{font-size:.8rem;font-weight:600;color:#6b7280;}
+.ppSec{border-top:1.5px solid #c5d3f0;padding:12px 16px;}
+.ppSecT{font-size:.62rem;font-weight:800;color:#0d1b6e;letter-spacing:1.4px;text-transform:uppercase;background:#f0f4ff;padding:4px 8px;border-radius:5px;margin-bottom:8px;}
+.ppRow{display:flex;justify-content:space-between;align-items:flex-start;padding:4px 0;border-bottom:1px solid #f5f5f5;gap:8px;}
+.ppRow:last-child{border-bottom:none;}
+.ppKey{font-size:.67rem;color:#6b7280;min-width:145px;flex-shrink:0;}
+.ppVal{font-size:.75rem;font-weight:600;color:#111827;text-align:right;word-break:break-all;}
+.ppVal a{color:#1565C0;text-decoration:none;font-weight:700;}
+.ppVal a:hover{text-decoration:underline;}
+.ppchip{border-radius:4px;padding:2px 6px;font-size:.68rem;font-weight:700;display:inline-block;margin:1px;}
+.ppchip-yes{background:#dcfce7;color:#14532d;}.ppchip-no{background:#f3f4f6;color:#6b7280;}
+.ppchip-titled{background:#f3e8ff;color:#7c3aed;}.ppchip-trainer{background:#dbeafe;color:#1a3fad;}
+.ppchip-arbiter{background:#fee2e2;color:#dc2626;}.ppchip-arena{background:#fff7ed;color:#ea580c;}
+/* LOGIN PANEL */
+.ppLogin{border-top:1.5px solid #c5d3f0;padding:14px 16px;background:#f8faff;}
+.ppLogin h4{font-size:.67rem;font-weight:800;color:#0d1b6e;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;}
+.ppLGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+.ppLGrid label{font-size:.64rem;color:#6b7280;display:block;margin-bottom:2px;}
+.ppLGrid input{width:100%;border:1.5px solid #c5d3f0;border-radius:6px;padding:7px 9px;font-size:.8rem;outline:none;}
+.ppLGrid input:focus{border-color:#1565C0;}
+.ppBtnVfy{width:100%;background:linear-gradient(90deg,#0d1b6e,#1565C0);color:#fff;border:none;border-radius:7px;padding:8px;font-size:.82rem;font-weight:700;cursor:pointer;}
+.ppLErr{color:#dc2626;font-size:.71rem;margin-top:4px;display:none;}
+/* EDIT */
+.ppEdit{border-top:1.5px solid #c5d3f0;padding:14px 16px;display:none;}
+.ppEditT{font-size:.62rem;font-weight:800;color:#0d1b6e;letter-spacing:1.2px;text-transform:uppercase;background:#eff6ff;padding:4px 8px;border-radius:5px;margin-bottom:8px;margin-top:11px;}
+.ppEGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.ppEFull{grid-column:1/-1;}
+.ppEItem label{font-size:.63rem;font-weight:700;color:#0d1b6e;text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:2px;}
+.ppEItem input,.ppEItem select{border:1.5px solid #c5d3f0;border-radius:6px;padding:6px 8px;font-size:.79rem;outline:none;width:100%;}
+.ppEItem input:focus,.ppEItem select:focus{border-color:#1565C0;}
+.ppEItem input:disabled{background:#f3f4f6;color:#6b7280;}
+.ppe-err{color:#dc2626;font-size:.65rem;min-height:12px;}
+.ppDD{position:relative;}
+.ppDDi{width:100%;border:1.5px solid #c5d3f0;border-radius:6px;padding:6px 8px;font-size:.79rem;outline:none;}
+.ppDDi:focus{border-color:#1565C0;}
+.ppDDl{position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid #c5d3f0;border-top:none;border-radius:0 0 7px 7px;max-height:160px;overflow-y:auto;z-index:400;display:none;}
+.ppDDl.open{display:block;}
+.ppDDit{padding:6px 9px;font-size:.79rem;cursor:pointer;}
+.ppDDit:hover{background:#f0f4ff;}
+.ppRG{display:flex;gap:12px;padding:6px 0;}
+.ppRG label{display:flex;align-items:center;gap:4px;font-size:.79rem;cursor:pointer;}
+.ppPinWrap{border:1.5px dashed #c5d3f0;border-radius:7px;padding:10px;margin-bottom:10px;}
+.ppP3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;}
+.ppCPin{background:#f0f4ff;border-radius:7px;padding:10px;margin-bottom:8px;}
+.ppCPin label{font-size:.63rem;font-weight:700;color:#0d1b6e;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:4px;}
+.ppCPin input{width:100%;border:1.5px solid #c5d3f0;border-radius:6px;padding:6px 8px;font-size:.79rem;outline:none;}
+.ppSave{width:100%;background:linear-gradient(90deg,#16a34a,#15803d);color:#fff;border:none;border-radius:7px;padding:9px;font-size:.83rem;font-weight:700;cursor:pointer;margin-top:2px;}
+.ppSave:hover{opacity:.88;}
+.ppMsg{font-size:.75rem;margin-top:4px;display:none;}
+.ppMsg.ok{color:#16a34a;}.ppMsg.err{color:#dc2626;}
+@media(max-width:560px){.ppEGrid,.ppLGrid,.ppP3,.ppRatings{grid-template-columns:1fr;}.ppName{font-size:1.1rem;}}
+
+
+/* TOAST */
+#toastMsg{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#0d1b6e;color:#fff;padding:10px 22px;border-radius:30px;font-size:.84rem;font-weight:600;opacity:0;transition:all .35s cubic-bezier(.4,0,.2,1);z-index:9999;pointer-events:none;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.25);}
+#toastMsg.show{opacity:1;transform:translateX(-50%) translateY(0);}
+#toastMsg.green{background:#16a34a;}
+#toastMsg.red{background:#dc2626;}
+
+/* SMOOTH UI */
+*{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
+input,select,button{transition:border-color .18s,background .18s,box-shadow .18s,opacity .18s;}
+input:focus,select:focus{box-shadow:0 0 0 3px rgba(21,101,192,.15);outline:none;}
+.btnAdmin:active,.btnProfile:active,.ppSave:active,.ppBtnVfy:active{transform:scale(.97);}
+button:focus-visible{outline:2px solid var(--blue-accent);outline-offset:2px;}
+/* Scrollbar */
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:#f0f4ff;}
+::-webkit-scrollbar-thumb{background:#c5d3f0;border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:#1565C0;}
+/* Input focus glow for profile popup */
+.ppEItem input:focus,.ppEItem select:focus{box-shadow:0 0 0 3px rgba(21,101,192,.15);}
+/* Table row hover smooth */
+tbody tr{transition:background .12s;}
+/* Filter panel smooth open */
+.filterPanel{transition:none;}
+/* Profile popup scroll smooth */
+#profilePopup{scroll-behavior:smooth;}
+.ppInner{animation:ppSlideIn .25s cubic-bezier(.4,0,.2,1);}
+@keyframes ppSlideIn{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);}}
+/* Chip hover */
+.chip{transition:transform .12s;}
+.chip:hover{transform:scale(1.05);}
+
+.btnAdminTool{background:rgba(255,255,255,.12);color:#fff;border:1.5px solid rgba(255,255,255,.3);border-radius:6px;padding:5px 11px;font-size:.72rem;font-weight:600;cursor:pointer;transition:background .18s;white-space:nowrap;display:none;}
+.btnAdminTool:hover{background:rgba(255,255,255,.25);}
+body.adminMode .btnAdminTool{display:inline-flex;align-items:center;gap:4px;}
+.adminToolBar{background:linear-gradient(90deg,var(--blue-dark),var(--blue-accent));padding:7px 16px;display:none;flex-wrap:wrap;gap:6px;align-items:center;justify-content:flex-end;max-width:100%;}
+body.adminMode .adminToolBar{display:flex;}
+.copyIpCell{cursor:pointer;user-select:none;position:relative;}
+.copyIpCell:hover .copyIpBtn{opacity:1;}
+.copyIpBtn{opacity:0;position:absolute;right:0;top:50%;transform:translateY(-50%);background:var(--blue-dark);color:#fff;border:none;border-radius:4px;padding:2px 7px;font-size:.65rem;font-weight:700;cursor:pointer;transition:opacity .15s;white-space:nowrap;margin-left:4px;}
+body.adminMode .copyIpBtn{display:inline-block;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:1024px){
+  .tableWrap{border-radius:0;}
+  table{font-size:.72rem;}
+  th,td{padding:7px 6px;}
+}
+@media(max-width:768px){
+  .pageHeader{padding:10px 12px;}
+  .pageHeader img{height:40px;}
+  .pageHeader h1{font-size:.88rem;}
+  .filterGrid{grid-template-columns:1fr 1fr;}
+  table{font-size:.68rem;min-width:700px;}
+  .ppEGrid,.ppLGrid,.ppP3,.ppRatings{grid-template-columns:1fr;}
+  .ppHero{padding:20px 14px 14px;}
+  .ppName{font-size:1.1rem;}
+  .adminToolBar{justify-content:flex-start;}
+}
+@media(max-width:480px){
+  .pageHeader{gap:6px;}
+  .headerRight{gap:4px;}
+  .btnAdmin{padding:5px 9px;font-size:.72rem;}
+  .filterGrid{grid-template-columns:1fr;}
+  .statsBar{flex-direction:column;align-items:flex-start;gap:4px;}
+  .ppInner{border-radius:10px;}
+  table{min-width:580px;}
+}
+/* Desktop view / touch toggle */
+.viewToggle{display:flex;gap:4px;align-items:center;}
+.viewToggle button{background:#f0f4ff;border:1.5px solid var(--border);border-radius:5px;padding:4px 9px;font-size:.7rem;cursor:pointer;font-weight:600;color:var(--blue-dark);}
+.viewToggle button.active{background:var(--blue-dark);color:#fff;border-color:var(--blue-dark);}
+/* Force mobile view */
+body.forceDesktop table{min-width:1200px;}
+body.forceMobile .tableWrap{font-size:.65rem;}
+body.forceMobile th,body.forceMobile td{padding:5px 4px;}
+
+/* PHOTO UPLOAD */
+.ppPhotoWrap{position:relative;width:92px;height:92px;margin:0 auto 11px;}
+.ppPhotoBox{width:92px;height:92px;border-radius:12px;border:3px solid rgba(255,255,255,.5);background:#fff;display:flex;align-items:center;justify-content:center;font-size:2.4rem;overflow:hidden;cursor:pointer;}
+.ppPhotoBox img{width:100%;height:100%;object-fit:cover;}
+.ppPhotoPlus{position:absolute;top:-6px;right:-6px;width:26px;height:26px;background:#16a34a;border:2px solid #fff;border-radius:50%;display:none;align-items:center;justify-content:center;cursor:pointer;font-size:1rem;color:#fff;font-weight:900;z-index:10;box-shadow:0 2px 6px rgba(0,0,0,.25);transition:transform .15s,background .15s;}
+.ppPhotoPlus:hover{transform:scale(1.15);background:#15803d;}
+body.ppCanEdit .ppPhotoPlus{display:flex;}
+/* Photo preview modal */
+#photoPreviewModal{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:10000;display:none;align-items:center;justify-content:center;cursor:zoom-out;}
+#photoPreviewModal.open{display:flex;}
+#photoPreviewModal img{max-width:90vw;max-height:88vh;border-radius:12px;object-fit:contain;box-shadow:0 8px 40px rgba(0,0,0,.6);animation:zoomIn .2s cubic-bezier(.4,0,.2,1);}
+@keyframes zoomIn{from{opacity:0;transform:scale(.85);}to{opacity:1;transform:scale(1);}}
+/* Upload panel */
+.ppUploadPanel{display:none;background:#f0f4ff;border-top:1.5px solid #c5d3f0;padding:14px 16px;transition:none;}
+.ppUploadPanel.open{display:block;animation:fadeInUp .2s ease;}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
+.ppUploadPanel h5{font-size:.68rem;font-weight:800;color:#0d1b6e;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
+.ppUploadDrop{border:2px dashed #c5d3f0;border-radius:8px;padding:16px;text-align:center;cursor:pointer;transition:border-color .18s,background .18s;background:#fff;}
+.ppUploadDrop:hover,.ppUploadDrop.dragover{border-color:#1565C0;background:#eff6ff;}
+.ppUploadDrop p{font-size:.75rem;color:#6b7280;margin:4px 0;}
+.ppUploadDrop .icon{font-size:1.8rem;}
+#ppFileInput{display:none;}
+.ppUploadPreview{display:none;text-align:center;margin-top:10px;}
+.ppUploadPreview img{width:80px;height:80px;border-radius:10px;object-fit:cover;border:2px solid #c5d3f0;}
+.ppUploadPreview p{font-size:.7rem;color:#6b7280;margin-top:4px;}
+.ppUploadActions{display:flex;gap:8px;margin-top:10px;}
+.ppBtnUpload{flex:1;background:linear-gradient(90deg,#16a34a,#15803d);color:#fff;border:none;border-radius:7px;padding:8px;font-size:.8rem;font-weight:700;cursor:pointer;}
+.ppBtnUpload:hover{opacity:.88;}
+.ppBtnCancelUp{flex:1;background:#f3f4f6;border:1.5px solid #c5d3f0;border-radius:7px;padding:8px;font-size:.8rem;font-weight:600;cursor:pointer;}
+.ppUploadMsg{font-size:.72rem;margin-top:6px;text-align:center;display:none;}
+.ppUploadMsg.ok{color:#16a34a;}.ppUploadMsg.err{color:#dc2626;}
+</style>
+</head>
+<body>
+
+<div class="pageHeader">
+  <div class="left">
+    <img src="data:image/jpeg;base64,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AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" alt="ChessX" style="height:52px;"/>
+    <div>
+      <h1>IP Database</h1>
+      <p>Individual Person &mdash; ChessX</p>
+    </div>
+  </div>
+  <div class="headerRight">
+    <span class="adminInfo" id="adminInfoBar" style="display:none;"></span>
+    <button class="btnAdmin btnLogout" id="btnAdminLogout" style="display:none;" onclick="adminLogout()">&#x23CF; Admin Logout</button>
+    <button class="btnAdmin" id="btnAdminLogin" onclick="openAdminLogin()">&#x1F512; Admin Login</button>
+  </div>
+</div>
+
+<!-- ADMIN TOOL BAR -->
+<div class="adminToolBar" id="adminToolBar">
+  <span style="font-size:.72rem;color:rgba(255,255,255,.7);margin-right:4px;">Admin Tools:</span>
+  <button class="btnAdminTool" onclick="copyIpIdPage()">&#x1F4CB; Copy IP IDs (This Page)</button>
+  <button class="btnAdminTool" onclick="copyIpIdAll()">&#x1F4CB; Copy IP IDs (All Data)</button>
+  <button class="btnAdminTool" onclick="downloadJSON()">&#x2B07; Download DB (JSON)</button>
+  <button class="btnAdminTool" onclick="downloadExcel()">&#x2B07; Download DB (Excel)</button>
+</div>
+
+<!-- ADMIN LOGIN MODAL -->
+<div class="modal-overlay" id="adminModal">
+  <div class="modal-card">
+    <h3>&#x1F512; Admin Login</h3>
+    <label class="field-label">Admin ID</label>
+    <input class="field-input" type="text" id="adminIdInput" placeholder="ADMIN ID" oninput="this.value=this.value.toUpperCase()"/>
+    <label class="field-label">Admin PIN (6 digits)</label>
+    <input class="field-input" type="password" id="adminPinInput" placeholder="6-digit PIN" maxlength="6" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'')"/>
+    <div class="modal-err" id="adminLoginErr"></div>
+    <div class="modal-btns">
+      <button class="btn-primary" onclick="doAdminLogin()">Login</button>
+      <button class="btn-cancel" onclick="closeAdminModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM MODAL -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal-card">
+    <h3 style="color:var(--red);">&#x26A0; Confirm Deletion</h3>
+    <p id="deleteMsg" style="font-size:.82rem;text-align:center;margin-bottom:16px;color:var(--text);"></p>
+    <label class="field-label">Enter Admin PIN to Confirm</label>
+    <input class="field-input" type="password" id="deletePinInput" placeholder="6-digit Admin PIN" maxlength="6" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'')"/>
+    <div class="modal-err" id="deleteErr"></div>
+    <div class="modal-btns">
+      <button class="btn-danger" onclick="doDelete()">&#x1F5D1; Delete</button>
+      <button class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="filterBar">
+  <div class="filterToggle" id="filterToggle">
+    <span>&#x1F50D; Search &amp; Filters</span>
+    <div class="toggleIcon" id="toggleIcon">+</div>
+  </div>
+  <div class="filterPanel" id="filterPanel">
+    <div class="filterGrid">
+      <div class="filterItem searchFull">
+        <label>Search — Name / ChessX IP ID / AICF ID</label>
+        <input type="text" id="f_search" placeholder="Type to search..."/>
+      </div>
+      <div class="filterItem">
+        <label>Gender</label>
+        <select id="f_Q12_gender"><option value="">All</option><option>MALE</option><option>FEMALE</option></select>
+      </div>
+      <div class="filterItem">
+        <label>Country</label><input type="text" id="f_Q16_country" placeholder="e.g. India"/>
+      </div>
+      <div class="filterItem">
+        <label>State</label><input type="text" id="f_Q19_state" placeholder="e.g. Gujarat"/>
+      </div>
+      <div class="filterItem">
+        <label>District</label><input type="text" id="f_Q20_district" placeholder="e.g. Surat"/>
+      </div>
+      <div class="filterItem">
+        <label>Birth Year (From &ndash; To)</label>
+        <div class="byearRow">
+          <input type="text" id="f_byFrom" placeholder="1990" maxlength="4"/>
+          <span>&ndash;</span>
+          <input type="text" id="f_byTo" placeholder="2010" maxlength="4"/>
+        </div>
+      </div>
+      <div class="filterItem">
+        <label>Player Title</label>
+        <select id="f_title">
+          <option value="">All</option><option value="__any__">Titled (Any)</option>
+          <option>GM</option><option>IM</option><option>FM</option><option>CM</option>
+          <option>WGM</option><option>WIM</option><option>WFM</option><option>WCM</option>
+        </select>
+      </div>
+      <div class="filterItem">
+        <label>Arbiter Title</label>
+        <select id="f_arbiter">
+          <option value="">All</option><option value="__any__">Arbiter (Any)</option>
+          <option>IA</option><option>FA</option><option>NA</option>
+        </select>
+      </div>
+      <div class="filterItem">
+        <label>Trainer Title</label>
+        <select id="f_trainer">
+          <option value="">All</option><option value="__any__">Trainer (Any)</option>
+          <option>FST</option><option>FT</option><option>FI</option><option>NI</option><option>DI</option>
+        </select>
+      </div>
+      <div class="filterItem">
+        <label>Arena Title</label>
+        <select id="f_arena">
+          <option value="">All</option><option value="__any__">Arena (Any)</option>
+          <option>AGM</option><option>AIM</option><option>AFM</option><option>ACM</option>
+        </select>
+      </div>
+      <div class="filterItem">
+        <label>Player Type</label>
+        <select id="f_rated">
+          <option value="">All</option><option value="YES">Rated</option><option value="NO">Unrated</option>
+        </select>
+      </div>
+      <div class="filterItem">
+        <label>FIDE ID</label>
+        <select id="f_fide">
+          <option value="">All</option><option value="yes">FIDE ID Available</option><option value="no">No FIDE ID</option>
+        </select>
+      </div>
+      <div class="filterItem">
+        <label>Membership Status</label>
+        <select id="f_memStatus"><option value="">All</option><option>Active</option><option>Inactive</option></select>
+      </div>
+      <div class="filterItem hidden" id="memTypeFilter">
+        <label>Membership Type</label>
+        <select id="f_memType"><option value="">All</option><option>Platinum</option><option>Gold</option></select>
+      </div>
+    </div>
+    <div class="filterActions">
+      <button class="btnReset" id="btnReset">&#x21BA; Reset</button>
+
+    </div>
+  </div>
+</div>
+
+<div class="statsBar">
+  <div class="count">Showing <strong id="showCount">0</strong> of <strong id="totalCount">0</strong> records</div>
+  <button class="btnDelete" id="btnDeleteSelected" onclick="confirmDelete()" style="display:none;">&#x1F5D1; Delete Selected</button>
+  <div class="viewToggle" id="viewToggleWrap">
+    <span style="font-size:.68rem;color:var(--muted);">View:</span>
+    <button onclick="setView('auto')" id="vAuto" class="active" title="Auto">Auto</button>
+    <button onclick="setView('desktop')" id="vDesktop" title="Desktop">&#x1F5A5;</button>
+    <button onclick="setView('mobile')" id="vMobile" title="Mobile">&#x1F4F1;</button>
+  </div>
+  <div class="sortBar" id="sortBarWrap" style="display:none;">
+    <label>Sort by:</label>
+    <select id="sortField">
+      <optgroup label="Name">
+        <option value="Q09_fullname_asc">Name A → Z</option>
+        <option value="Q09_fullname_desc">Name Z → A</option>
+      </optgroup>
+      <optgroup label="Entry (Entered By)">
+        <option value="Q43_dateofentry_desc">Entry: Newest First</option>
+        <option value="Q43_dateofentry_asc">Entry: Oldest First</option>
+      </optgroup>
+      <optgroup label="Edit (Edited By)">
+        <option value="Q46_dateofedit_desc">Last Edited: Newest First</option>
+        <option value="Q46_dateofedit_asc">Last Edited: Oldest First</option>
+      </optgroup>
+    </select>
+  </div>
+</div>
+
+<div class="tableWrap">
+  <table id="ipTable">
+    <thead>
+      <tr>
+        <th class="adminCols" id="thCheckAll" style="width:36px;"><input type="checkbox" id="checkAll" class="cbSelect" title="Select all on page"/></th>
+        <th>Photo</th>
+        <th>Sr</th>
+        <th>ChessX IP ID</th>
+        <th>Titles</th>
+        <th style="min-width:160px;">Name</th>
+        <th>Birth Year</th>
+        <th>Gender</th>
+        <th>Roles</th>
+        <th>Country</th>
+        <th>State</th>
+        <th>District</th>
+        <th>Membership</th>
+        <th>Profile</th>
+        <th class="adminCols" style="min-width:110px;">WhatsApp</th>
+        <th class="adminCols">Entered By</th>
+        <th class="adminCols">Date of Entry</th>
+        <th class="adminCols">Time of Entry</th>
+        <th class="adminCols">Edited By</th>
+        <th class="adminCols">Date of Edit</th>
+        <th class="adminCols">Time of Edit</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody">
+      <tr class="skRow"><td colspan="14"><div class="skCell" style="width:60%"></div></td></tr>
+      <tr class="skRow"><td colspan="14"><div class="skCell" style="width:80%"></div></td></tr>
+      <tr class="skRow"><td colspan="14"><div class="skCell" style="width:70%"></div></td></tr>
+      <tr class="skRow"><td colspan="14"><div class="skCell" style="width:90%"></div></td></tr>
+    </tbody>
+  </table>
+  <div class="noData hidden" id="noData">No records found matching your filters.</div>
+</div>
+<div class="pagination" id="pagination"></div>
+<button id="backToTop" title="Back to top">&#x2191;</button>
+
+
+<!-- ═══ PROFILE POPUP ═══ -->
+<div id="profilePopup">
+  <div class="ppInner" id="ppInner">
+    <button class="ppClose" onclick="closeProfilePopup()">&#x2715;</button>
+    <div class="ppHero">
+      <div class="ppPhotoWrap">
+        <div class="ppPhotoBox" id="ppPhoto" onclick="ppPhotoClick()">&#x1F464;</div>
+        <button class="ppPhotoPlus" id="ppPhotoPlus" onclick="event.stopPropagation();ppOpenUpload()" title="Change photo">+</button>
+      </div>
+      <div class="ppName" id="ppName"></div>
+      <div class="ppIdLine" id="ppIdLine"></div>
+      <div id="ppMem"></div>
+    </div>
+    <div class="ppRatings">
+      <div class="ppRBox"><div class="ppRLabel">Standard Rating</div><div class="ppRVal" id="ppStd" style="display:none;"></div><div class="ppRNR" id="ppStdNR">Not Rated</div></div>
+      <div class="ppRBox"><div class="ppRLabel">Rapid Rating</div><div class="ppRVal" id="ppRapid" style="display:none;"></div><div class="ppRNR" id="ppRapidNR">Not Rated</div></div>
+      <div class="ppRBox"><div class="ppRLabel">Blitz Rating</div><div class="ppRVal" id="ppBlitz" style="display:none;"></div><div class="ppRNR" id="ppBlitzNR">Not Rated</div></div>
+    </div>
+    <!-- PHOTO UPLOAD PANEL -->
+    <div class="ppUploadPanel" id="ppUploadPanel">
+      <h5>&#x1F4F7; Update Profile Photo</h5>
+      <div class="ppUploadDrop" id="ppUploadDrop"
+           onclick="document.getElementById('ppFileInput').click()"
+           ondragover="event.preventDefault();this.classList.add('dragover')"
+           ondragleave="this.classList.remove('dragover')"
+           ondrop="event.preventDefault();this.classList.remove('dragover');ppHandleFile(event.dataTransfer.files[0])">
+        <div class="icon">&#x1F4F7;</div>
+        <p><strong>Click to choose</strong> or drag &amp; drop</p>
+        <p>JPG, JPEG, PNG only &bull; Compressed to ~30 KB automatically</p>
+      </div>
+      <input type="file" id="ppFileInput" accept=".jpg,.jpeg,.png,image/jpeg,image/png" onchange="ppHandleFile(this.files[0])"/>
+      <div class="ppUploadPreview" id="ppUploadPreview" style="display:none;">
+        <img id="ppUploadThumb" src="" alt="Preview" style="width:80px;height:80px;border-radius:10px;object-fit:cover;border:2px solid #c5d3f0;display:block;margin:0 auto 6px;"/>
+        <p id="ppUploadSize" style="font-size:.7rem;color:#6b7280;text-align:center;"></p>
+      </div>
+      <div class="ppUploadActions" id="ppUploadActions" style="display:none;">
+        <button class="ppBtnUpload" onclick="ppUploadPhoto()">&#x2B06; Add / Update Profile Photo</button>
+        <button class="ppBtnCancelUp" onclick="ppCancelUpload()">Cancel</button>
+      </div>
+      <div class="ppUploadMsg" id="ppUploadMsg" style="display:none;"></div>
+    </div>
+
+    <div class="ppSec" id="ppSecId"></div>
+    <div class="ppSec" id="ppSecPersonal"></div>
+    <div class="ppSec" id="ppSecTitles"></div>
+    <div class="ppSec" id="ppSecMembership"></div>
+    <!-- LOGIN -->
+    <div class="ppLogin" id="ppLoginPanel">
+      <h4>&#x1F510; Login to View Full Details &amp; Edit Profile</h4>
+      <div class="ppLGrid">
+        <div><label>ChessX IP ID</label><input type="text" id="ppLId" autocomplete="off"/></div>
+        <div><label>IP PIN (6 digits)</label><input type="password" id="ppLPin" maxlength="6" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'')"/></div>
+      </div>
+      <button class="ppBtnVfy" onclick="ppDoLogin()">&#x1F50D; Verify &amp; Login</button>
+      <div class="ppLErr" id="ppLErr"></div>
+    </div>
+    <!-- EDIT TOGGLE BUTTON -->
+    <div id="ppEditToggleBtn" style="display:none;border-top:1.5px solid #c5d3f0;padding:12px 16px;background:#f8faff;">
+      <button onclick="ppToggleEdit()" style="width:100%;background:linear-gradient(90deg,#0d1b6e,#1565C0);color:#fff;border:none;border-radius:7px;padding:9px;font-size:.84rem;font-weight:700;cursor:pointer;">&#x270F; Edit Profile Details</button>
+    </div>
+    <!-- EDIT -->
+    <div class="ppEdit" id="ppEditSection">
+      <div style="font-size:.7rem;font-weight:800;color:#0d1b6e;letter-spacing:1.2px;text-transform:uppercase;background:#f0f4ff;padding:6px 10px;border-radius:5px;margin-bottom:6px;">&#x270F; Edit Profile</div>
+      <div id="ppAdminEditBadge" style="display:none;background:#dcfce7;color:#14532d;border-radius:6px;padding:5px 10px;font-size:.72rem;font-weight:700;margin-bottom:8px;">&#x1F6E1; Admin Mode — Full Edit (Q1–Q47)</div>
+
+      <!-- Q1: Q01_hasfideid — shown as read-only info -->
+      <div class="ppEditT">Q1 — FIDE ID Status</div>
+      <div class="ppEGrid">
+        <div class="ppEItem ppEFull"><label>Q1 — Do You Have a FIDE ID?</label><input type="text" id="pe_Q01_hasfideid" disabled style="background:#f3f4f6;"/><div class="ppe-err"></div></div>
+      </div>
+
+      <!-- Q2–Q5: ID Fields -->
+      <div class="ppEditT">Q2–Q5 — ID Details</div>
+      <div class="ppEGrid">
+        <div class="ppEItem" id="wrap_Q02_fideid"><label>Q2 — FIDE ID (Numeric)</label><input type="text" id="pe_Q02_fideid" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'')"/><div class="ppe-err" id="pee_Q02_fideid"></div></div>
+        <div class="ppEItem"><label>Q3 — AICF ID</label><input type="text" id="pe_Q03_aicfid"/><div class="ppe-err"></div></div>
+        <div class="ppEItem"><label>Q4 — Chess.com ID</label><input type="text" id="pe_Q04_chesscomid"/><div class="ppe-err"></div></div>
+        <div class="ppEItem"><label>Q5 — Lichess ID</label><input type="text" id="pe_Q05_lichessid"/><div class="ppe-err"></div></div>
+      </div>
+
+      <!-- Q6–Q11: Name & DOB -->
+      <div class="ppEditT">Q6–Q11 — Name &amp; Birth Details</div>
+      <div class="ppEGrid">
+        <div class="ppEItem" id="wrap_Q06_Fname"><label>Q6 — First Name</label><input type="text" id="pe_Q06_Fname" oninput="this.value=this.value.toUpperCase();ppBuildName()"/><div class="ppe-err" id="pee_Q06_Fname"></div></div>
+        <div class="ppEItem" id="wrap_Q07_Mname"><label>Q7 — Middle Name</label><input type="text" id="pe_Q07_Mname" oninput="this.value=this.value.toUpperCase();ppBuildName()"/><div class="ppe-err"></div></div>
+        <div class="ppEItem" id="wrap_Q08_Lname"><label>Q8 — Last Name (Surname)</label><input type="text" id="pe_Q08_Lname" oninput="this.value=this.value.toUpperCase();ppBuildName()"/><div class="ppe-err" id="pee_Q08_Lname"></div></div>
+        <div class="ppEItem"><label>Q9 — Full Name (Auto)</label><input type="text" id="pe_Q09_fullname" disabled style="background:#f3f4f6;"/><div class="ppe-err"></div></div>
+        <div class="ppEItem"><label>Q10 — Date of Birth (DD/MM/YYYY)</label><input type="text" id="pe_Q10_dob" maxlength="10" inputmode="numeric" oninput="ppSlash(this)"/><div class="ppe-err" id="pee_Q10_dob"></div></div>
+        <div class="ppEItem"><label>Q11 — Birth Year (Auto)</label><input type="text" id="pe_Q11_birthyear" disabled style="background:#f3f4f6;"/><div class="ppe-err"></div></div>
+      </div>
+
+      <!-- Q12–Q15: Contact -->
+      <div class="ppEditT">Q12–Q15 — Gender &amp; Contact</div>
+      <div class="ppEGrid">
+        <div class="ppEItem ppEFull"><label>Q12 — Gender</label><div class="ppRG"><label><input type="radio" name="ppeg" value="MALE"/> Male</label><label><input type="radio" name="ppeg" value="FEMALE"/> Female</label></div><div class="ppe-err" id="pee_Q12_gender"></div></div>
+        <div class="ppEItem"><label>Q13 — Contact No (10 digits)</label><input type="text" id="pe_Q13_contactno" inputmode="numeric" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'')"/><div class="ppe-err" id="pee_Q13_contactno"></div></div>
+        <div class="ppEItem"><label>Q14 — WhatsApp No (10 digits)</label><input type="text" id="pe_Q14_whatsappno" inputmode="numeric" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'')"/><div class="ppe-err" id="pee_Q14_whatsappno"></div></div>
+        <div class="ppEItem ppEFull"><label>Q15 — Email ID</label><input type="email" id="pe_Q15_emailid"/><div class="ppe-err" id="pee_Q15_emailid"></div></div>
+      </div>
+
+      <!-- Q16–Q22: Location -->
+      <div class="ppEditT">Q16–Q22 — Location</div>
+      <div class="ppEGrid">
+        <div class="ppEItem"><label>Q16 — Country (Not Editable)</label><input type="text" id="pe_Q16_country" disabled style="background:#f3f4f6;"/><div class="ppe-err"></div></div>
+        <div class="ppEItem"><label>Q19 — State</label><div class="ppDD"><input type="text" class="ppDDi" id="pe_Q19_state" placeholder="Search Q19_state..." oninput="ppFilterDD('Q19_state')" onfocus="ppFilterDD('Q19_state')" autocomplete="off"/><div class="ppDDl" id="ppDDl_Q19_state"></div></div><input type="hidden" id="pe_Q19_stateVal"/><div class="ppe-err" id="pee_Q19_state"></div></div>
+        <div class="ppEItem"><label>Q20 — District</label><div class="ppDD"><input type="text" class="ppDDi" id="pe_Q20_district" placeholder="Search Q20_district..." oninput="ppFilterDD('Q20_district')" onfocus="ppFilterDD('Q20_district')" autocomplete="off"/><div class="ppDDl" id="ppDDl_Q20_district"></div></div><input type="hidden" id="pe_Q20_districtVal"/><div class="ppe-err" id="pee_Q20_district"></div></div>
+        <div class="ppEItem"><label>Q21 — City / Taluka</label><input type="text" id="pe_Q21_city"/><div class="ppe-err" id="pee_Q21_city"></div></div>
+        <div class="ppEItem"><label>Q22 — PIN Code (6 digits)</label><input type="text" id="pe_Q22_postalcode" inputmode="numeric" maxlength="6" oninput="this.value=this.value.replace(/\D/g,'')"/><div class="ppe-err" id="pee_Q22_postalcode"></div></div>
+      </div>
+
+      <!-- Q23–Q38: FIDE Ratings, Titles, Flags, Membership — shown for all, disabled logic applied by JS -->
+      <div id="ppEditFideSec">
+        <div class="ppEditT">Q23–Q25 — FIDE Ratings (Disabled — Updated by External Tool)</div>
+        <div class="ppEGrid">
+          <div class="ppEItem"><label>Q23 — Standard Rating (1400–4000)</label><input type="text" id="pe_Q23_stdrating" inputmode="numeric" maxlength="4" disabled style="background:#f3f4f6;"/><div class="ppe-err"></div></div>
+          <div class="ppEItem"><label>Q24 — Rapid Rating (1400–4000)</label><input type="text" id="pe_Q24_rapidrating" inputmode="numeric" maxlength="4" disabled style="background:#f3f4f6;"/><div class="ppe-err"></div></div>
+          <div class="ppEItem"><label>Q25 — Blitz Rating (1400–4000)</label><input type="text" id="pe_Q25_blitzrating" inputmode="numeric" maxlength="4" disabled style="background:#f3f4f6;"/><div class="ppe-err"></div></div>
+        </div>
+        <div class="ppEditT">Q26–Q29 — FIDE Titles (Disabled — Updated by External Tool)</div>
+        <div class="ppEGrid">
+          <div class="ppEItem"><label>Q26 — FIDE Player Title</label><select id="pe_Q27_playertitle" disabled style="background:#f3f4f6;"><option value="">None</option><option>GM</option><option>IM</option><option>FM</option><option>CM</option><option>WGM</option><option>WIM</option><option>WFM</option><option>WCM</option></select><div class="ppe-err"></div></div>
+          <div class="ppEItem"><label>Q27 — FIDE Trainer Title</label><select id="pe_Q29_trainertitle" disabled style="background:#f3f4f6;"><option value="">None</option><option>FST</option><option>FT</option><option>FI</option><option>NI</option><option>DI</option></select><div class="ppe-err"></div></div>
+          <div class="ppEItem"><label>Q28 — FIDE Arbiter Title</label><select id="pe_Q31_arbitertitle" disabled style="background:#f3f4f6;"><option value="">None</option><option>IA</option><option>FA</option><option>NA</option></select><div class="ppe-err"></div></div>
+          <div class="ppEItem"><label>Q29 — FOA Arena Title</label><select id="pe_Q33_foatitle" disabled style="background:#f3f4f6;"><option value="">None</option><option>AGM</option><option>AIM</option><option>AFM</option><option>ACM</option></select><div class="ppe-err"></div></div>
+        </div>
+        <div class="ppEditT">Q30–Q33 — Membership Details</div>
+        <div class="ppEGrid">
+          <div class="ppEItem ppEFull"><label>Q30 — Membership Status</label><div class="ppRG" id="memStatusGroup"><label><input type="radio" name="ppems" value="Active" onchange="ppToggleMembership()"/> Active</label><label><input type="radio" name="ppems" value="Inactive" onchange="ppToggleMembership()" checked/> Inactive</label></div><div class="ppe-err"></div></div>
+          <div class="ppEItem"><label>Q31 — Membership Type</label><select id="pe_Q36_MBtype" disabled style="background:#f3f4f6;"><option value="">— Select —</option><option>Platinum</option><option>Gold</option></select><div class="ppe-err"></div></div>
+          <div class="ppEItem"><label>Q32 — Membership Start (DD/MM/YYYY)</label><input type="text" id="pe_Q37_MBstartdate" maxlength="10" inputmode="numeric" disabled style="background:#f3f4f6;" oninput="ppMembershipStartInput(this)"/><div class="ppe-err"></div></div>
+          <div class="ppEItem"><label>Q33 — Membership End (Auto)</label><input type="text" id="pe_Q38_MBenddate" disabled style="background:#f3f4f6;"/><div class="ppe-err"></div></div>
+        </div>
+      </div>
+
+      <!-- Q41: ChessX IP ID — admin editable, user read-only -->
+      <div class="ppEditT" id="wrap_Q41_label">Q41 — ChessX IP ID</div>
+      <div class="ppEGrid" id="wrap_Q41_section">
+        <div class="ppEItem ppEFull"><label>Q41 — ChessX IP ID</label><input type="text" id="pe_Q41_ipid"/><div class="ppe-err" id="pee_Q41_ipid"></div></div>
+      </div>
+
+      <!-- Q42–Q47: System fields — visible, disabled, auto-populated -->
+      <div class="ppEditT">Q42–Q47 — System / Audit Fields (Auto)</div>
+      <div class="ppEGrid">
+        <div class="ppEItem"><label>Q42 — Entered By</label><input type="text" id="pe_Q42_enteredby" disabled style="background:#f3f4f6;"/></div>
+        <div class="ppEItem"><label>Q43 — Date of Entry</label><input type="text" id="pe_Q43_dateofentry" disabled style="background:#f3f4f6;"/></div>
+        <div class="ppEItem"><label>Q44 — Time of Entry</label><input type="text" id="pe_Q44_timeofentry" disabled style="background:#f3f4f6;"/></div>
+        <div class="ppEItem"><label>Q45 — Edited By</label><input type="text" id="pe_Q45_editedby" disabled style="background:#f3f4f6;"/></div>
+        <div class="ppEItem"><label>Q46 — Date of Edit</label><input type="text" id="pe_Q46_dateofedit" disabled style="background:#f3f4f6;"/></div>
+        <div class="ppEItem"><label>Q47 — Time of Edit</label><input type="text" id="pe_Q47_timeofedit" disabled style="background:#f3f4f6;"/></div>
+      </div>
+
+      <!-- Q45: ChessX IP PIN change -->
+      <div class="ppPinWrap" id="ppPinChangeWrap">
+        <div style="font-size:.67rem;font-weight:700;color:#0d1b6e;margin-bottom:7px;text-transform:uppercase;letter-spacing:.4px;" id="ppPinChangeLabel">&#x1F511; Q45 — Change ChessX IP PIN (Optional)</div>
+        <div class="ppP3">
+          <div class="ppEItem"><label>Old PIN</label><input type="password" id="pe_oldPin" inputmode="numeric" maxlength="6" oninput="this.value=this.value.replace(/\D/g,'')"/><div class="ppe-err" id="pee_oldPin"></div></div>
+          <div class="ppEItem"><label>New PIN</label><input type="password" id="pe_newPin" inputmode="numeric" maxlength="6" oninput="this.value=this.value.replace(/\D/g,'')"/><div class="ppe-err" id="pee_newPin"></div></div>
+          <div class="ppEItem"><label>Confirm New PIN</label><input type="password" id="pe_conPin" inputmode="numeric" maxlength="6" oninput="this.value=this.value.replace(/\D/g,'')"/><div class="ppe-err" id="pee_conPin"></div></div>
+        </div>
+        <p style="font-size:.65rem;color:#6b7280;">Leave all three blank to keep current PIN.</p>
+      </div>
+
+      <!-- Final confirm PIN -->
+      <div class="ppCPin">
+        <label id="ppConfirmPinLabel">&#x1F510; Enter Current IP PIN to Confirm All Changes</label>
+        <input type="password" id="pe_finalPin" inputmode="numeric" maxlength="6" oninput="this.value=this.value.replace(/\D/g,'')"/>
+        <div class="ppe-err" id="pee_finalPin"></div>
+      </div>
+      <button class="ppSave" onclick="ppSave()">&#x2714; Modify &amp; Save Changes</button>
+      <div class="ppMsg" id="ppMsg"></div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, getDocs, query, orderBy, doc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBApKwOIjF4pk0PJZBJo7GM8a7a8ECRIxU",
+  authDomain: "chessx-4e0ec.firebaseapp.com",
+  projectId: "chessx-4e0ec",
+  storageBucket: "chessx-4e0ec.firebasestorage.app",
+  messagingSenderId: "888357289080",
+  appId: "1:888357289080:web:5ecdf9890bf09408eac18d",
+  measurementId: "G-XBRF1H45K8"
+};
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+const PAGE_SIZE = 100;
+let allData=[], filteredData=[], currentPage=1;
+let adminLoggedIn=false, adminRecord=null;
+let selectedDocIds=new Set();
+
+// HELPERS
+const $ = id => document.getElementById(id);
+function debounce(fn, ms){ let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), ms); }; }
+const dApplyFilters = debounce(()=>applyFilters(), 220);
+const mask    = (v,n=3)=>{ if(!v) return '-'; const s=String(v); return s.length<=n?s:'***'+s.slice(-n); };
+const maskEmail = v => v ? v.slice(0,3)+'***' : '-';
+const fideLink  = (fid,label) => fid ? `<a class="fideLink" href="https://ratings.fide.com/profile/${fid}" target="_blank">${label}</a>` : label;
+const isFide    = id => id && !String(id).startsWith('IP');
+
+function getTitles(r){
+  const t=[];
+  if(r.Q27_playertitle)  t.push({v:r.Q27_playertitle,  cls:'chip-titled'});
+  if(r.Q31_arbitertitle) t.push({v:r.Q31_arbitertitle, cls:'chip-arbiter'});
+  if(r.Q29_trainertitle) t.push({v:r.Q29_trainertitle, cls:'chip-trainer'});
+  if(r.Q33_foatitle)         t.push({v:r.Q33_foatitle,          cls:'chip-arena'});
+  return t;
+}
+function getRoles(r){
+  const roles=[];
+  const hasVal = v => (v||'').trim()!=='';
+  if(r.Q28_titledplayer==='YES'      || hasVal(r.Q27_playertitle))  roles.push({label:'Titled Player',cls:'chip-titled'});
+  if(r.Q26_ratedplayer==='YES'       || hasVal(r.Q23_stdrating)||hasVal(r.Q24_rapidrating)||hasVal(r.Q25_blitzrating)) roles.push({label:'Rated Player',cls:'chip-rated'});
+  if(r.Q34_arenatitledplayer==='YES' || hasVal(r.Q33_foatitle))         roles.push({label:'Arena Titled',cls:'chip-arena'});
+  if(r.Q32_fidearbiter==='YES'       || hasVal(r.Q31_arbitertitle)) roles.push({label:'FIDE Arbiter',cls:'chip-arbiter'});
+  if(r.Q30_fidetrainer==='YES'       || hasVal(r.Q29_trainertitle)) roles.push({label:'FIDE Trainer',cls:'chip-trainer'});
+  return roles;
+}
+
+// LOAD DATA
+async function loadData(){
+  try{
+    const snap = await getDocs(query(collection(db,'ipdbchessX'), orderBy('Q09_fullname','asc')));
+    allData = snap.docs.map(d=>({_docId:d.id,...d.data()}));
+    $('totalCount').textContent = allData.length;
+    filteredData = [...allData];
+    applySortAndRender();
+  }catch(e){
+    $('tableBody').innerHTML=`<tr><td colspan="20" style="text-align:center;color:#dc2626;padding:30px;">Error loading data: ${e.message}</td></tr>`;
+  }
+}
+loadData();
+
+// FILTER TOGGLE
+$('filterToggle').addEventListener('click',()=>{
+  $('filterPanel').classList.toggle('open');
+  $('toggleIcon').classList.toggle('open');
+});
+
+// FILTER EVENTS
+['f_search','f_Q16_country','f_Q19_state','f_Q20_district','f_byFrom','f_byTo'].forEach(id=>{
+  $(id).addEventListener('input', dApplyFilters);
+});
+['f_Q12_gender','f_title','f_arbiter','f_trainer','f_arena','f_rated','f_fide','f_memStatus','f_memType'].forEach(id=>{
+  $(id).addEventListener('change',()=>{
+    if(id==='f_memStatus') $('memTypeFilter').classList.toggle('hidden',$(id).value!=='Active');
+    applyFilters();
+  });
+});
+$('btnReset').addEventListener('click',()=>{
+  ['f_search','f_Q16_country','f_Q19_state','f_Q20_district','f_byFrom','f_byTo'].forEach(id=>$(id).value='');
+  ['f_Q12_gender','f_title','f_arbiter','f_trainer','f_arena','f_rated','f_fide','f_memStatus','f_memType'].forEach(id=>$(id).selectedIndex=0);
+  $('memTypeFilter').classList.add('hidden');
+  filteredData=[...allData]; currentPage=1; selectedDocIds.clear(); applySortAndRender();
+});
+
+// SORT
+$('sortField').addEventListener('change', applySortAndRender);
+
+function parseDate(d){
+  if(!d) return 0;
+  const p=d.split('/'); // DD/MM/YYYY
+  if(p.length!==3) return 0;
+  return parseInt(p[2]+p[1]+p[0])||0;
+}
+function parseTime(t){
+  if(!t) return 0;
+  const p=t.split(':');
+  return p.length===2?parseInt(p[0])*60+parseInt(p[1]):0;
+}
+function applySortAndRender(){
+  const sv = $('sortField').value;
+  const [field,dir] = sv.split('_');
+  filteredData.sort((a,b)=>{
+    let av=a[field]||'', bv=b[field]||'';
+    if(field==='Q43_dateofentry'||field==='Q46_dateofedit'){
+      const ad=parseDate(av), bd=parseDate(bv);
+      if(ad!==bd) return dir==='asc'?ad-bd:bd-ad;
+      // Same date: use time as tiebreaker
+      const timeField=field==='Q43_dateofentry'?'Q44_timeofentry':'Q47_timeofedit';
+      const at=parseTime(a[timeField]||''), bt=parseTime(b[timeField]||'');
+      return dir==='asc'?at-bt:bt-at;
+    }
+    const cmp=av.localeCompare(bv);
+    return dir==='asc'?cmp:-cmp;
+  });
+  renderTable();
+}
+
+// APPLY FILTERS
+function applyFilters(){
+  const search   = $('f_search').value.trim().toLowerCase();
+  const Q12_gender   = $('f_Q12_gender').value;
+  const Q16_country  = $('f_Q16_country').value.trim().toLowerCase();
+  const Q19_state    = $('f_Q19_state').value.trim().toLowerCase();
+  const Q20_district = $('f_Q20_district').value.trim().toLowerCase();
+  const byFrom   = parseInt($('f_byFrom').value)||0;
+  const byTo     = parseInt($('f_byTo').value)||9999;
+  const title    = $('f_title').value;
+  const arbiter  = $('f_arbiter').value;
+  const trainer  = $('f_trainer').value;
+  const arena    = $('f_arena').value;
+  const rated    = $('f_rated').value;
+  const fide     = $('f_fide').value;
+  const memSt    = $('f_memStatus').value;
+  const memTy    = $('f_memType').value;
+
+  filteredData = allData.filter(r=>{
+    if(search){ const s=[(r.Q09_fullname||''),(r.Q41_ipid||''),(r.Q03_aicfid||'')].join(' ').toLowerCase(); if(!s.includes(search)) return false; }
+    if(Q12_gender   && r.Q12_gender!==Q12_gender) return false;
+    if(Q16_country  && !(r.Q16_country||'').toLowerCase().includes(Q16_country)) return false;
+    if(Q19_state    && !(r.Q19_state||'').toLowerCase().includes(Q19_state)) return false;
+    if(Q20_district && !(r.Q20_district||'').toLowerCase().includes(Q20_district)) return false;
+    if(byFrom>0||byTo<9999){ const by=parseInt(r.Q11_birthyear)||0; if(by<byFrom||by>byTo) return false; }
+    if(title){
+      if(title==='__any__'){if(!(r.Q27_playertitle||'').trim()) return false;}
+      else if(r.Q27_playertitle!==title) return false;
+    }
+    if(arbiter){
+      if(arbiter==='__any__'){if(!(r.Q31_arbitertitle||'').trim()) return false;}
+      else if(r.Q31_arbitertitle!==arbiter) return false;
+    }
+    if(trainer){
+      if(trainer==='__any__'){if(!(r.Q29_trainertitle||'').trim()) return false;}
+      else if(r.Q29_trainertitle!==trainer) return false;
+    }
+    if(arena){
+      if(arena==='__any__'){if(!(r.Q33_foatitle||'').trim()) return false;}
+      else if(r.Q33_foatitle!==arena) return false;
+    }
+    if(rated    && r.Q26_ratedplayer!==rated) return false;
+    if(fide==='yes' && !(r.Q02_fideid||'').trim()) return false;
+    if(fide==='no'  &&  (r.Q02_fideid||'').trim()) return false;
+    if(memSt && r.Q35_MBstatus!==memSt) return false;
+    if(memTy && r.Q36_MBtype!==memTy)   return false;
+    return true;
+  });
+  currentPage=1; selectedDocIds.clear(); applySortAndRender();
+}
+
+// RENDER TABLE
+function renderTable(){
+  const tbody  = $('tableBody');
+  const noData = $('noData');
+  $('showCount').textContent = filteredData.length;
+
+  if(!filteredData.length){
+    tbody.innerHTML=''; noData.classList.remove('hidden');
+    $('pagination').innerHTML=''; return;
+  }
+  noData.classList.add('hidden');
+
+  const start = (currentPage-1)*PAGE_SIZE;
+  const page  = filteredData.slice(start, start+PAGE_SIZE);
+  const isAdmin = adminLoggedIn;
+
+  tbody.innerHTML = page.map((r,i)=>{
+    const srNo   = start+i+1;
+    const Q41_ipid   = r.Q41_ipid||'-';
+    const isFId  = isFide(Q41_ipid);
+    const idHtml = isFId ? fideLink(r.Q02_fideid, Q41_ipid) : `<span>${Q41_ipid}</span>`;
+    const titles = getTitles(r);
+    const roles  = getRoles(r);
+    const memType= r.Q36_MBtype||'';
+    const isGold = memType==='Gold';
+    const isPlat = memType==='Platinum';
+    const rowCls = isGold?'rowGold':isPlat?'rowPlatinum':'';
+    const memBadge = isGold?'<span class="goldBadge"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 14" width="16" height="12" style="vertical-align:middle;margin-right:2px;"><rect x="0" y="0" width="6" height="14" rx="1" fill="#fbbf24"/><rect x="7" y="3" width="6" height="11" rx="1" fill="#f59e0b"/><rect x="14" y="6" width="6" height="8" rx="1" fill="#d97706"/></svg></span>':isPlat?'<span class="diamondBadge">&#x1F48E;</span>':'';
+    const titleChips = titles.map(t=>`<span class="chip ${t.cls}">${t.v}</span>`).join('');
+    const roleChips  = roles.map(ro=>`<span class="chip ${ro.cls}">${ro.label}</span>`).join('');
+    const memChip    = memType?`<span class="chip ${isGold?'chip-rated':isPlat?'chip-titled':''}">${memBadge}${memType}</span>`:'-';
+    const isSel      = selectedDocIds.has(r._docId);
+    const cbCol      = isAdmin?`<td class="adminCols"><input type="checkbox" class="cbSelect cbRow" data-docid="${r._docId}" ${isSel?'checked':''}></td>`:'';
+    const cpBtn = (val) => isAdmin && val && val!=='-' ? `<button class="copyBtn" onclick="event.stopPropagation();copyToClip('${String(val).replace(/'/g,"\\'")}')">&#x1F4CB;</button>` : '';
+    const waNum = (r.Q14_whatsappno||'').replace(/\D/g,'');
+    const waCell = isAdmin ? `<td class="adminCols"><button class="waBtn" onclick="event.stopPropagation();${waNum?`window.open('https://wa.me/91${waNum}','_blank')`:`window.showToast('No WhatsApp number','red')`}">&#x1F4AC; WhatsApp</button></td>` : '';
+    const adminCols  = isAdmin
+      ? `${waCell}<td class="adminCols" style="font-size:.7rem;color:var(--muted);">${r.Q42_enteredby||'-'}</td>
+         <td class="adminCols" style="font-size:.7rem;">${r.Q43_dateofentry||'-'}</td>
+         <td class="adminCols" style="font-size:.7rem;">${r.Q44_timeofentry||'-'}</td>
+         <td class="adminCols" style="font-size:.7rem;color:var(--muted);">${r.Q45_editedby||'-'}</td>
+         <td class="adminCols" style="font-size:.7rem;">${r.Q46_dateofedit||'-'}</td>
+         <td class="adminCols" style="font-size:.7rem;">${r.Q47_timeofedit||'-'}</td>`
+      : '';
+
+    const tdCopy = (val, extra='') => `<td class="copyCell">${val||'-'}${cpBtn(val)}${extra}</td>`;
+
+    return `<tr class="${rowCls} rowAnim${isSel?' selected':''}" style="animation-delay:${i*0.02}s" data-docid="${r._docId}">
+      ${cbCol}
+      <td style="cursor:pointer;" onclick="${r.Q39_profile?`showBigPhoto('${r.Q39_profile}')`:''}">
+        ${r.Q39_profile
+          ?`<img src="${r.Q39_profile}" style="width:36px;height:36px;border-radius:6px;object-fit:cover;border:2px solid #c5d3f0;transition:transform .15s;" onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform=''" onerror="this.parentElement.innerHTML='<span style=font-size:1.4rem>&#x1F464;</span>'"/>`
+          :'<span style="font-size:1.4rem;">&#x1F464;</span>'}
+      </td>
+      <td style="font-size:.72rem;color:var(--muted);">${srNo}</td>
+      <td class="copyCell" style="white-space:nowrap;">${idHtml}${isAdmin?('<button class="copyBtn" onclick="event.stopPropagation();copyToClip(\'' + (r.Q41_ipid||'') + '\')">&#x1F4CB;</button>'):''}</td>
+      <td><div class="chipList">${titleChips||'-'}</div></td>
+      ${isAdmin ? `<td class="copyCell"><strong>${r.Q09_fullname||'-'}</strong>${cpBtn(r.Q09_fullname)}</td>` : `<td><strong>${r.Q09_fullname||'-'}</strong></td>`}
+      ${isAdmin ? tdCopy(r.Q11_birthyear) : `<td>${r.Q11_birthyear||'-'}</td>`}
+      ${isAdmin ? tdCopy(r.Q12_gender) : `<td>${r.Q12_gender||'-'}</td>`}
+      <td><div class="chipList">${roleChips||'-'}</div></td>
+      ${isAdmin ? tdCopy(r.Q16_country) : `<td>${r.Q16_country||'-'}</td>`}
+      ${isAdmin ? tdCopy(r.Q19_state) : `<td>${r.Q19_state||'-'}</td>`}
+      ${isAdmin ? tdCopy(r.Q20_district) : `<td>${r.Q20_district||'-'}</td>`}
+      <td>${memChip}</td>
+      <td><button class="btnProfile" data-ipid="${r.Q41_ipid||''}">&#x1F464; Profile</button></td>
+      ${adminCols}
+    </tr>`;
+  }).join('');
+
+  // Profile buttons → open new tab
+  tbody.querySelectorAll('.btnProfile').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const Q41_ipid = btn.dataset.ipid;
+      if(Q41_ipid) openProfilePopup(Q41_ipid, adminLoggedIn, adminRecord);
+    });
+  });
+
+  // Checkboxes
+  if(isAdmin){
+    tbody.querySelectorAll('.cbRow').forEach(cb=>{
+      cb.addEventListener('change',()=>{
+        if(cb.checked) selectedDocIds.add(cb.dataset.docid);
+        else selectedDocIds.delete(cb.dataset.docid);
+        updateDeleteBtn();
+        cb.closest('tr').classList.toggle('selected',cb.checked);
+      });
+    });
+    // Check-all for this page
+    const checkAll = $('checkAll');
+    if(checkAll){
+      const pageDocIds = page.map(r=>r._docId);
+      checkAll.checked = pageDocIds.every(id=>selectedDocIds.has(id));
+      checkAll.onchange = ()=>{
+        if(checkAll.checked) pageDocIds.forEach(id=>selectedDocIds.add(id));
+        else pageDocIds.forEach(id=>selectedDocIds.delete(id));
+        renderTable(); // re-render to update checkboxes
+      };
+    }
+    updateDeleteBtn();
+  }
+
+  renderPagination();
+}
+
+function updateDeleteBtn(){
+  const btn = $('btnDeleteSelected');
+  if(!btn) return;
+  const n = selectedDocIds.size;
+  btn.style.display = n>0?'block':'none';
+  btn.textContent = `🗑 Delete Selected (${n})`;
+}
+
+// PAGINATION
+function renderPagination(){
+  const total=Math.ceil(filteredData.length/PAGE_SIZE);
+  const pg=$('pagination');
+  if(total<=1){pg.innerHTML='';return;}
+  let html='';
+  if(currentPage>1) html+=`<button id="pgPrev">&#x2039; Prev</button>`;
+  for(let i=1;i<=total;i++){
+    if(i===1||i===total||Math.abs(i-currentPage)<=2) html+=`<button class="${i===currentPage?'active':''}" data-pg="${i}">${i}</button>`;
+    else if(Math.abs(i-currentPage)===3) html+=`<span class="dots">...</span>`;
+  }
+  if(currentPage<total) html+=`<button id="pgNext">Next &#x203A;</button>`;
+  pg.innerHTML=html;
+  pg.querySelectorAll('button[data-pg]').forEach(b=>{
+    b.addEventListener('click',()=>{ currentPage=parseInt(b.dataset.pg); renderTable(); window.scrollTo({top:0,behavior:'smooth'}); });
+  });
+  const prev=pg.querySelector('#pgPrev'),next=pg.querySelector('#pgNext');
+  if(prev) prev.addEventListener('click',()=>{ currentPage--; renderTable(); window.scrollTo({top:0,behavior:'smooth'}); });
+  if(next) next.addEventListener('click',()=>{ currentPage++; renderTable(); window.scrollTo({top:0,behavior:'smooth'}); });
+}
+
+// ADMIN LOGIN
+window.openAdminLogin = ()=>{ $('adminModal').classList.add('open'); $('adminLoginErr').style.display='none'; $('adminIdInput').value=''; $('adminPinInput').value=''; };
+window.closeAdminModal = ()=>$('adminModal').classList.remove('open');
+window.doAdminLogin = async ()=>{
+  const id  = $('adminIdInput').value.trim();
+  const pin = $('adminPinInput').value.trim();
+  const err = $('adminLoginErr');
+  err.style.display='none';
+  if(!id||!pin){ err.textContent='Enter Admin ID and PIN.'; err.style.display='block'; return; }
+  try{
+    const snap = await getDocs(query(collection(db,'adminpwddb')));
+    let found = null;
+    snap.docs.forEach(d=>{
+      const data=d.data();
+      if(data.adminId===id && data.adminPin===pin) found=data;
+    });
+    if(!found){ err.textContent='❌ Incorrect Admin ID or PIN.'; err.style.display='block'; return; }
+    adminLoggedIn=true; adminRecord=found;
+    closeAdminModal();
+    $('adminInfoBar').textContent=`✅ Admin: ${id}`;
+    $('adminInfoBar').style.display='inline';
+    $('btnAdminLogin').style.display='none';
+    $('btnAdminLogout').style.display='inline-block';
+    document.body.classList.add('adminMode');
+    $('sortBarWrap').style.display='flex';
+    renderTable();
+  }catch(e){ err.textContent='Error: '+e.message; err.style.display='block'; }
+};
+window.adminLogout = ()=>{
+  adminLoggedIn=false; adminRecord=null; selectedDocIds.clear();
+  $('adminInfoBar').style.display='none';
+  $('btnAdminLogin').style.display='inline-block';
+  $('btnAdminLogout').style.display='none';
+  document.body.classList.remove('adminMode');
+  $('sortBarWrap').style.display='none';
+  renderTable();
+};
+
+// DELETE
+let pendingDeleteDocIds=[];
+window.confirmDelete = ()=>{
+  if(!selectedDocIds.size) return;
+  pendingDeleteDocIds=[...selectedDocIds];
+  $('deleteMsg').textContent=`You are about to permanently delete ${pendingDeleteDocIds.length} record(s). This action cannot be undone.`;
+  $('deleteErr').style.display='none';
+  $('deletePinInput').value='';
+  $('deleteModal').classList.add('open');
+};
+window.closeDeleteModal = ()=>$('deleteModal').classList.remove('open');
+window.doDelete = async ()=>{
+  const pin   = $('deletePinInput').value.trim();
+  const err   = $('deleteErr');
+  err.style.display='none';
+  if(!pin||pin.length!==6){ err.textContent='Enter 6-digit Admin PIN.'; err.style.display='block'; return; }
+  if(!adminRecord||pin!==adminRecord.adminPin){ err.textContent='❌ Incorrect Admin PIN.'; err.style.display='block'; return; }
+  try{
+    const toDelete=[...pendingDeleteDocIds];
+    const errEl2=$('deleteErr');
+    errEl2.style.display='none';
+    // Show loading indicator
+    const dBtn=document.querySelector('#deleteModal .btn-danger');
+    if(dBtn){dBtn.textContent='⏳ Deleting...';dBtn.disabled=true;}
+    await Promise.all(toDelete.map(docId=>deleteDoc(doc(db,'ipdbchessX',docId))));
+    if(dBtn){dBtn.textContent='🗑 Delete';dBtn.disabled=false;}
+    // Remove from local data
+    toDelete.forEach(docId=>{
+      allData = allData.filter(r=>r._docId!==docId);
+    });
+    selectedDocIds.clear(); pendingDeleteDocIds=[];
+    filteredData=[...allData];
+    applyFilters();
+    $('totalCount').textContent=allData.length;
+    closeDeleteModal();
+    // Show success toast
+    showToast('✅ '+toDelete.length+' record(s) deleted successfully.','green');
+  }catch(e){
+    let msg=e.message;
+    if(msg.includes('permission')||msg.includes('insufficient')){
+      msg='❌ Firestore permission denied for DELETE. Fix your rule: in Firebase Console → Firestore → Rules, change ipdbchessX delete rule to: allow delete: if true;';
+    }
+    err.textContent='❌ '+msg; err.style.display='block';
+  }
+};
+
+// BACK TO TOP
+window.addEventListener('scroll',()=>$('backToTop').classList.toggle('visible',window.scrollY>300));
+$('backToTop').addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
+
+// ═══ PROFILE POPUP JS ═══
+const STATES = ["Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh","Goa","Gujarat","Haryana","Himachal Pradesh","Jharkhand","Karnataka","Kerala","Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram","Nagaland","Odisha","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana","Tripura","Uttar Pradesh","Uttarakhand","West Bengal","Andaman and Nicobar Islands","Chandigarh","Dadra and Nagar Haveli and Daman and Diu","Delhi","Jammu and Kashmir","Ladakh","Lakshadweep","Puducherry"];
+const DISTRICTS = {"Gujarat":["Ahmedabad","Amreli","Anand","Aravalli","Banaskantha","Bharuch","Bhavnagar","Botad","Chhota Udaipur","Dahod","Dang","Devbhoomi Dwarka","Gandhinagar","Gir Somnath","Jamnagar","Junagadh","Kheda","Kachchh","Mahisagar","Mehsana","Morbi","Narmada","Navsari","Panchmahal","Patan","Porbandar","Rajkot","Sabarkantha","Surat","Surendranagar","Tapi","Vadodara","Valsad"],"Maharashtra":["Ahmednagar","Akola","Amravati","Aurangabad","Beed","Bhandara","Buldhana","Chandrapur","Dhule","Gadchiroli","Gondia","Hingoli","Jalgaon","Jalna","Kolhapur","Latur","Mumbai City","Mumbai Suburban","Nagpur","Nanded","Nandurbar","Nashik","Osmanabad","Palghar","Parbhani","Pune","Raigad","Ratnagiri","Sangli","Satara","Sindhudurg","Solapur","Thane","Wardha","Washim","Yavatmal"],"Tamil Nadu":["Ariyalur","Chengalpattu","Chennai","Coimbatore","Cuddalore","Dharmapuri","Dindigul","Erode","Kallakurichi","Kancheepuram","Kanyakumari","Karur","Krishnagiri","Madurai","Nagapattinam","Namakkal","Nilgiris","Perambalur","Pudukottai","Ramanathapuram","Ranipet","Salem","Sivaganga","Tenkasi","Thanjavur","Theni","Thoothukudi","Tiruchirappalli","Tirunelveli","Tirupattur","Tiruppur","Tiruvallur","Tiruvannamalai","Tiruvarur","Vellore","Viluppuram","Virudhunagar"],"Delhi":["Central Delhi","East Delhi","New Delhi","North Delhi","North East Delhi","North West Delhi","Shahdara","South Delhi","South East Delhi","South West Delhi","West Delhi"]};
+
+let ppRecord=null, ppDocId=null, ppLoggedIn=false, ppIsAdmin=false, ppAdminRec=null;
+const pp$=id=>document.getElementById(id);
+const ppGv=id=>(pp$(id)?.value||'').trim();
+const ppMask=(v,n=3)=>{if(!v)return '-';const s=String(v);return s.length<=n?s:'***'+s.slice(-n);};
+const ppMaskEmail=v=>v?v.slice(0,3)+'***':'-';
+const ppFideLink=(fid,label)=>fid?`<a href="https://ratings.fide.com/profile/${fid}" target="_blank" style="color:#1565C0;font-weight:700;">${label}</a>`:label;
+const ppIsFide=id=>id&&!String(id).startsWith('IP');
+const ppChipBool=(v,lbl)=>`<span class="ppchip ${v==='YES'?'ppchip-yes':'ppchip-no'}">${v==='YES'?'✔':'✘'} ${lbl}</span>`;
+const ppChip=(v,cls)=>v?`<span class="ppchip ${cls}">${v}</span>`:'';
+window.ppSlash=el=>{let v=el.value.replace(/\D/g,'');if(v.length>2)v=v.slice(0,2)+'/'+v.slice(2);if(v.length>5)v=v.slice(0,5)+'/'+v.slice(5);el.value=v.slice(0,10);};
+window.ppBuildName=()=>{const f=ppGv('pe_Q06_Fname'),m=ppGv('pe_Q07_Mname'),l=ppGv('pe_Q08_Lname');pp$('pe_Q09_fullname').value=[f,m,l].filter(Boolean).join(' ');};
+
+async function openProfilePopup(Q41_ipid, isAdminView=false, adminRec=null){
+  // Reset Q19_state
+  ppRecord=null; ppDocId=null; ppLoggedIn=false; ppIsAdmin=false; ppAdminRec=null;
+  pp$('ppPhoto').innerHTML='&#x1F464;';
+  document.body.classList.remove('ppCanEdit');
+  ppCancelUpload();
+  pp$('ppUploadPanel')?.classList.remove('open');
+  pp$('ppName').textContent='Loading...';
+  pp$('ppIdLine').textContent='';
+  pp$('ppMem').innerHTML='';
+  ['ppStd','ppRapid','ppBlitz'].forEach(id=>{pp$(id).style.display='none';});
+  ['ppStdNR','ppRapidNR','ppBlitzNR'].forEach(id=>{pp$(id).style.display='block';});
+  pp$('ppSecId').innerHTML=''; pp$('ppSecPersonal').innerHTML=''; pp$('ppSecTitles').innerHTML=''; pp$('ppSecMembership').innerHTML='';
+  pp$('ppLoginPanel').style.display='block';
+  pp$('ppEditSection').style.display='none';
+  pp$('ppLErr').style.display='none';
+  pp$('ppLId').value=Q41_ipid;
+  pp$('ppLPin').value='';
+  pp$('ppMsg').style.display='none';
+  pp$('profilePopup').classList.add('open');
+  document.body.style.overflow='hidden';
+
+  try{
+    const {getDocs:gd, query:q, collection:col, where:wh} = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+    const snap = await gd(q(col(db,'ipdbchessX'), wh('Q41_ipid','==',Q41_ipid)));
+    if(snap.empty){pp$('ppName').textContent='Profile not found'; return;}
+    ppDocId=snap.docs[0].id; ppRecord=snap.docs[0].data();
+    ppIsAdmin=isAdminView; ppAdminRec=adminRec;
+    ppRenderProfile(isAdminView);
+  }catch(e){pp$('ppName').textContent='Error: '+e.message;}
+}
+
+function ppRenderProfile(verified){
+  const r=ppRecord;
+  // Photo
+  const photoEl=pp$('ppPhoto');
+  if(r.Q39_profile) photoEl.innerHTML=`<img src="${r.Q39_profile}" onerror="this.innerHTML='&#x1F464;'" style="width:100%;height:100%;object-fit:cover;border-radius:9px;"/>`;
+  else photoEl.innerHTML='&#x1F464;';
+  // Show + button only when IP or Admin is logged in
+  if(verified||ppIsAdmin) document.body.classList.add('ppCanEdit');
+  else document.body.classList.remove('ppCanEdit');
+  pp$('ppName').textContent=r.Q09_fullname||'-';
+  const Q41_ipid=r.Q41_ipid||'-';
+  pp$('ppIdLine').innerHTML=ppIsFide(Q41_ipid)?`ChessX IP ID: ${ppFideLink(r.Q02_fideid,Q41_ipid)}`:`ChessX IP ID: ${Q41_ipid}`;
+  // Membership badge
+  const mEl=pp$('ppMem');
+  if(r.Q35_MBstatus==='Active'&&r.Q36_MBtype){const ico=r.Q36_MBtype==='Gold'?`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 14" width="18" height="14" style="vertical-align:middle;margin-right:3px;"><rect x="0" y="0" width="6" height="14" rx="1" fill="#fbbf24"/><rect x="7" y="3" width="6" height="11" rx="1" fill="#f59e0b"/><rect x="14" y="6" width="6" height="8" rx="1" fill="#d97706"/></svg>`:'&#x1F48E;';mEl.innerHTML=`<span class="ppMemBadge">${ico} ${r.Q36_MBtype} Member</span>`;}
+  else mEl.innerHTML='';
+  // Ratings
+  const setR=(vid,nid,v)=>{if(v){pp$(vid).textContent=v;pp$(vid).style.display='block';pp$(nid).style.display='none';}else{pp$(vid).style.display='none';pp$(nid).style.display='block';}};
+  setR('ppStd','ppStdNR',r.Q23_stdrating); setR('ppRapid','ppRapidNR',r.Q24_rapidrating); setR('ppBlitz','ppBlitzNR',r.Q25_blitzrating);
+  // Section builder
+  const sec=(id,title,rows)=>{pp$(id).innerHTML=`<div class="ppSecT">${title}</div>`+rows.map(([k,v])=>`<div class="ppRow"><span class="ppKey">${k}</span><span class="ppVal">${v||'-'}</span></div>`).join('');};
+  // ID Section
+  sec('ppSecId','&#x1F194; ID Section',[
+    ['ChessX IP ID',ppIsFide(Q41_ipid)?ppFideLink(r.Q02_fideid,Q41_ipid):Q41_ipid],
+    ['FIDE ID',r.Q02_fideid?ppFideLink(r.Q02_fideid,r.Q02_fideid):'-'],
+    ['AICF ID',r.Q03_aicfid||'-'],
+    ['Chess.com ID',verified?(r.Q04_chesscomid||'-'):(r.Q04_chesscomid?'&#x2022;&#x2022;&#x2022;':'-')],
+    ['Lichess ID',verified?(r.Q05_lichessid||'-'):(r.Q05_lichessid?'&#x2022;&#x2022;&#x2022;':'-')],
+  ]);
+  // Personal
+  const Q10_dob=verified?(r.Q10_dob||'-'):(r.Q10_dob?'**/**/'+r.Q10_dob.slice(-4):'-');
+  const con=verified?(r.Q13_contactno||'-'):(r.Q13_contactno?ppMask(r.Q13_contactno,3):'-');
+  const wa=verified?(r.Q14_whatsappno||'-'):(r.Q14_whatsappno?ppMask(r.Q14_whatsappno,3):'-');
+  const em=verified?(r.Q15_emailid||'-'):(r.Q15_emailid?ppMaskEmail(r.Q15_emailid):'-');
+  sec('ppSecPersonal','&#x1F464; Personal Details',[
+    ['Full Name',r.Q09_fullname||'-'],['Date of Birth',Q10_dob],['Gender',r.Q12_gender||'-'],
+    ['Contact No',con],['WhatsApp No',wa],['Email ID',em],
+    ['Country',r.Q16_country||'-'],['State',r.Q19_state||'-'],['District',r.Q20_district||'-'],
+    ['City / Taluka',r.Q21_city||'-'],['PIN Code',r.Q22_postalcode||'-'],
+  ]);
+  // Titles
+  pp$('ppSecTitles').innerHTML=`<div class="ppSecT">&#x1F3C6; FIDE Titles &amp; Roles</div>`+
+    `<div class="ppRow"><span class="ppKey">Rated Player</span><span class="ppVal">${ppChipBool(r.Q26_ratedplayer,'Rated Player')}</span></div>`+
+    `<div class="ppRow"><span class="ppKey">Titled Player &mdash; Title</span><span class="ppVal">${ppChipBool(r.Q28_titledplayer,'Titled')} ${ppChip(r.Q27_playertitle,'ppchip-titled')}</span></div>`+
+    `<div class="ppRow"><span class="ppKey">FIDE Trainer &mdash; Title</span><span class="ppVal">${ppChipBool(r.Q30_fidetrainer,'Trainer')} ${ppChip(r.Q29_trainertitle,'ppchip-trainer')}</span></div>`+
+    `<div class="ppRow"><span class="ppKey">FIDE Arbiter &mdash; Title</span><span class="ppVal">${ppChipBool(r.Q32_fidearbiter,'Arbiter')} ${ppChip(r.Q31_arbitertitle,'ppchip-arbiter')}</span></div>`+
+    `<div class="ppRow"><span class="ppKey">Arena Titled &mdash; FOA</span><span class="ppVal">${ppChipBool(r.Q34_arenatitledplayer,'Arena Titled')} ${ppChip(r.Q33_foatitle,'ppchip-arena')}</span></div>`;
+  // Membership
+  const pin=verified?(r.Q40_ippin||'-'):'&#x2022;'.repeat(6);
+  pp$('ppSecMembership').innerHTML=`<div class="ppSecT">&#x1F4B3; Membership &amp; System Details</div>`+
+    `<div class="ppRow"><span class="ppKey">Membership Status</span><span class="ppVal">${r.Q35_MBstatus||'-'}</span></div>`+
+    `<div class="ppRow"><span class="ppKey">Membership Type</span><span class="ppVal">${r.Q36_MBtype||'-'}</span></div>`+
+    `<div class="ppRow"><span class="ppKey">Start Date</span><span class="ppVal">${r.Q37_MBstartdate||'-'}</span></div>`+
+    `<div class="ppRow"><span class="ppKey">End Date</span><span class="ppVal">${r.Q38_MBenddate||'-'}</span></div>`+
+    `<div class="ppRow"><span class="ppKey">ChessX IP PIN</span><span class="ppVal">${pin}</span></div>`+
+    `<div class="ppRow"><span class="ppKey">Country Code</span><span class="ppVal">${r.Q17_countrycode||'+91'}</span></div>`+
+    `<div class="ppRow"><span class="ppKey">Time Zone</span><span class="ppVal">${r.Q18_timezone||'Asia/Kolkata'}</span></div>`;
+  if(verified||ppIsAdmin){
+    pp$('ppLoginPanel').style.display='none';
+    pp$('ppEditSection').style.display='none';
+    pp$('ppEditToggleBtn').style.display='block';
+  } else {
+    pp$('ppLoginPanel').style.display='block';
+    pp$('ppEditSection').style.display='none';
+    pp$('ppEditToggleBtn').style.display='none';
+  }
+}
+
+
+function ppShowEdit(){
+  const r=ppRecord;
+  const hasFide=!!(r.Q02_fideid&&r.Q02_fideid.trim());
+
+  // Admin badge
+  const ab=pp$('ppAdminEditBadge');
+  if(ab) ab.style.display=ppIsAdmin?'block':'none';
+
+  // Populate Q1 status display
+  if(pp$('pe_Q01_hasfideid')) pp$('pe_Q01_hasfideid').value=r.Q01_hasfideid||'NO';
+
+  // Populate all fields
+  pp$('pe_Q02_fideid').value       = r.Q02_fideid||'';
+  pp$('pe_Q03_aicfid').value       = r.Q03_aicfid||'';
+  pp$('pe_Q04_chesscomid').value   = r.Q04_chesscomid||'';
+  pp$('pe_Q05_lichessid').value    = r.Q05_lichessid||'';
+  pp$('pe_Q06_Fname').value    = r.Q06_Fname||'';
+  pp$('pe_Q07_Mname').value   = r.Q07_Mname||'';
+  pp$('pe_Q08_Lname').value     = r.Q08_Lname||'';
+  pp$('pe_Q09_fullname').value     = r.Q09_fullname||'';
+  pp$('pe_Q10_dob').value          = r.Q10_dob||'';
+  if(pp$('pe_Q11_birthyear')) pp$('pe_Q11_birthyear').value = r.Q11_birthyear||'';
+  document.querySelectorAll('input[name="ppeg"]').forEach(rb=>rb.checked=(rb.value===r.Q12_gender));
+  pp$('pe_Q13_contactno').value    = r.Q13_contactno||'';
+  pp$('pe_Q14_whatsappno').value   = r.Q14_whatsappno||'';
+  pp$('pe_Q15_emailid').value      = r.Q15_emailid||'';
+  pp$('pe_Q16_country').value      = r.Q16_country||'India';
+  pp$('pe_Q19_state').value        = r.Q19_state||''; pp$('pe_Q19_stateVal').value=r.Q19_state||'';
+  pp$('pe_Q20_district').value     = r.Q20_district||''; pp$('pe_Q20_districtVal').value=r.Q20_district||'';
+  pp$('pe_Q21_city').value         = r.Q21_city||'';
+  pp$('pe_Q22_postalcode').value      = r.Q22_postalcode||'';
+
+  // FIDE & Membership fields
+  if(pp$('pe_Q23_stdrating'))       pp$('pe_Q23_stdrating').value       = r.Q23_stdrating||'';
+  if(pp$('pe_Q24_rapidrating'))     pp$('pe_Q24_rapidrating').value     = r.Q24_rapidrating||'';
+  if(pp$('pe_Q25_blitzrating'))     pp$('pe_Q25_blitzrating').value     = r.Q25_blitzrating||'';
+  if(pp$('pe_Q27_playertitle')) pp$('pe_Q27_playertitle').value = r.Q27_playertitle||'';
+  if(pp$('pe_Q29_trainertitle'))pp$('pe_Q29_trainertitle').value= r.Q29_trainertitle||'';
+  if(pp$('pe_Q31_arbitertitle'))pp$('pe_Q31_arbitertitle').value= r.Q31_arbitertitle||'';
+  if(pp$('pe_Q33_foatitle'))        pp$('pe_Q33_foatitle').value        = r.Q33_foatitle||'';
+  // Membership status via radio
+  document.querySelectorAll('input[name="ppems"]').forEach(rb=>rb.checked=(rb.value===(r.Q35_MBstatus||'Inactive')));
+  if(pp$('pe_Q36_MBtype'))  pp$('pe_Q36_MBtype').value  = r.Q36_MBtype||'';
+  if(pp$('pe_Q37_MBstartdate')) pp$('pe_Q37_MBstartdate').value = r.Q37_MBstartdate||'';
+  if(pp$('pe_Q38_MBenddate'))   pp$('pe_Q38_MBenddate').value   = r.Q38_MBenddate||'';
+  // Q41 IP ID
+  if(pp$('pe_Q41_ipid')) pp$('pe_Q41_ipid').value = r.Q41_ipid||'';
+  // Q42-Q47 system fields (always read-only display)
+  if(pp$('pe_Q42_enteredby'))  pp$('pe_Q42_enteredby').value  = r.Q42_enteredby||'';
+  if(pp$('pe_Q43_dateofentry'))pp$('pe_Q43_dateofentry').value= r.Q43_dateofentry||'';
+  if(pp$('pe_Q44_timeofentry'))pp$('pe_Q44_timeofentry').value= r.Q44_timeofentry||'';
+  if(pp$('pe_Q45_editedby'))   pp$('pe_Q45_editedby').value   = r.Q45_editedby||'';
+  if(pp$('pe_Q46_dateofedit')) pp$('pe_Q46_dateofedit').value = r.Q46_dateofedit||'';
+  if(pp$('pe_Q47_timeofedit')) pp$('pe_Q47_timeofedit').value = r.Q47_timeofedit||'';
+  pp$('pe_oldPin').value=''; pp$('pe_newPin').value=''; pp$('pe_conPin').value=''; pp$('pe_finalPin').value='';
+  pp$('ppMsg').style.display='none';
+
+  ppInitDD('Q19_state', STATES, v=>{
+    pp$('pe_Q19_stateVal').value=v;
+    pp$('pe_Q20_district').value=''; pp$('pe_Q20_districtVal').value='';
+    ppInitDD('Q20_district',DISTRICTS[v]||[],dv=>{pp$('pe_Q20_districtVal').value=dv;});
+  });
+  ppInitDD('Q20_district', DISTRICTS[r.Q19_state]||[], v=>{pp$('pe_Q20_districtVal').value=v;});
+
+  // ═══ IP LOGIN MODE ═══════════════════════════════════
+  if(!ppIsAdmin){
+    const fWrap=pp$('wrap_Q02_fideid');
+
+    if(hasFide){
+      // HAS FIDE ID:
+      // FIDE ID → visible + editable
+      // First/Middle/Last Name → visible + DISABLED
+      // Full Name → visible + disabled
+      if(fWrap) fWrap.style.display='';
+      pp$('pe_Q02_fideid').disabled=false;
+      pp$('pe_Q02_fideid').style.background='';
+
+      ['wrap_Q06_Fname','wrap_Q07_Mname','wrap_Q08_Lname'].forEach(id=>{
+        const w=pp$(id); if(w) w.style.display='';
+      });
+      pp$('pe_Q06_Fname').disabled=true;  pp$('pe_Q06_Fname').style.background='#f3f4f6';
+      pp$('pe_Q07_Mname').disabled=true; pp$('pe_Q07_Mname').style.background='#f3f4f6';
+      pp$('pe_Q08_Lname').disabled=true;   pp$('pe_Q08_Lname').style.background='#f3f4f6';
+
+    } else {
+      // NO FIDE ID:
+      // FIDE ID → hidden
+      // First/Middle/Last Name → visible + editable
+      // Full Name → visible + disabled
+      if(fWrap) fWrap.style.display='none';
+
+      ['wrap_Q06_Fname','wrap_Q07_Mname','wrap_Q08_Lname'].forEach(id=>{
+        const w=pp$(id); if(w) w.style.display='';
+      });
+      pp$('pe_Q06_Fname').disabled=false;  pp$('pe_Q06_Fname').style.background='';
+      pp$('pe_Q07_Mname').disabled=false; pp$('pe_Q07_Mname').style.background='';
+      pp$('pe_Q08_Lname').disabled=false;   pp$('pe_Q08_Lname').style.background='';
+    }
+
+    // Full Name: always visible + always disabled
+    pp$('pe_Q09_fullname').disabled=true;
+    pp$('pe_Q09_fullname').style.background='#f3f4f6';
+
+    // Q41: visible but DISABLED for IP login
+    const q41sec=pp$('wrap_Q41_section'); if(q41sec) q41sec.style.display='';
+    const q41lbl=pp$('wrap_Q41_label');   if(q41lbl) q41lbl.style.display='';
+    const q41el=pp$('pe_Q41_ipid'); if(q41el){q41el.disabled=true;q41el.style.background='#f3f4f6';}
+
+    // Q11: enabled for manual entry ONLY if Q10 has no value; otherwise disabled
+    const q10val=(r.Q10_dob||'').trim();
+    const q11el=pp$('pe_Q11_birthyear');
+    if(q11el){
+      if(!q10val){q11el.disabled=false;q11el.style.background='';}
+      else{q11el.disabled=true;q11el.style.background='#f3f4f6';}
+    }
+
+    // FIDE Ratings + Titles + Membership: always HIDDEN for IP login
+    const fs=pp$('ppEditFideSec'); if(fs) fs.style.display='none';
+
+    // PIN change: visible for IP
+    const pw=pp$('ppPinChangeWrap'); if(pw) pw.style.display='';
+    const pl=pp$('ppPinChangeLabel'); if(pl) pl.textContent='🔑 Q45 — Change ChessX IP PIN (Optional)';
+
+    // Final confirm: IP PIN
+    const cl=pp$('ppConfirmPinLabel');
+    if(cl) cl.textContent='🔐 Enter Current IP PIN to Confirm All Changes';
+    pp$('pe_finalPin').dataset.mode='ip';
+    pp$('pe_finalPin').placeholder='Your current IP PIN';
+  }
+
+  // ═══ ADMIN LOGIN MODE ════════════════════════════════
+  if(ppIsAdmin){
+    // FIDE ID: visible and editable by admin
+    // If changed → auto-clear ratings & titles
+    const fWrap=pp$('wrap_Q02_fideid');
+    if(fWrap) fWrap.style.display='';
+    pp$('pe_Q02_fideid').disabled=false;
+    pp$('pe_Q02_fideid').style.background='';
+    pp$('pe_Q02_fideid').oninput=function(){
+      this.value=this.value.replace(/\D/g,'');
+      if(this.value!==(ppRecord.Q02_fideid||'')){
+        ['pe_Q23_stdrating','pe_Q24_rapidrating','pe_Q25_blitzrating',
+         'pe_Q27_playertitle','pe_Q29_trainertitle','pe_Q31_arbitertitle','pe_Q33_foatitle'].forEach(fid=>{
+          const el=pp$(fid); if(el) el.value='';
+        });
+      }
+    };
+
+    // Name fields: all visible + DISABLED (updated by external tool / admin cannot change)
+    ['wrap_Q06_Fname','wrap_Q07_Mname','wrap_Q08_Lname'].forEach(id=>{
+      const w=pp$(id); if(w) w.style.display='';
+    });
+    pp$('pe_Q06_Fname').disabled=true;  pp$('pe_Q06_Fname').style.background='#f3f4f6';
+    pp$('pe_Q07_Mname').disabled=true; pp$('pe_Q07_Mname').style.background='#f3f4f6';
+    pp$('pe_Q08_Lname').disabled=true;   pp$('pe_Q08_Lname').style.background='#f3f4f6';
+    pp$('pe_Q09_fullname').disabled=true;
+    pp$('pe_Q09_fullname').style.background='#f3f4f6';
+
+    // Q41: visible and EDITABLE for admin (free text)
+    const q41secA=pp$('wrap_Q41_section'); if(q41secA) q41secA.style.display='';
+    const q41lblA=pp$('wrap_Q41_label');   if(q41lblA) q41lblA.style.display='';
+    const q41elA=pp$('pe_Q41_ipid'); if(q41elA){q41elA.disabled=false;q41elA.style.background='';}
+
+    // Q11: enabled for manual entry ONLY if Q10 has no value; otherwise disabled (auto from Q10)
+    const q10valA=(r.Q10_dob||'').trim();
+    const q11elA=pp$('pe_Q11_birthyear');
+    if(q11elA){
+      if(!q10valA){q11elA.disabled=false;q11elA.style.background='';}
+      else{q11elA.disabled=true;q11elA.style.background='#f3f4f6';}
+    }
+
+    // FIDE section: VISIBLE, ratings+titles DISABLED, membership ENABLED with logic
+    const fs=pp$('ppEditFideSec'); if(fs) fs.style.display='';
+
+    // Ratings & Titles already disabled in HTML — keep disabled
+    ['pe_Q23_stdrating','pe_Q24_rapidrating','pe_Q25_blitzrating',
+     'pe_Q27_playertitle','pe_Q29_trainertitle','pe_Q31_arbitertitle','pe_Q33_foatitle'].forEach(fid=>{
+      const el=pp$(fid);
+      if(el){el.disabled=true; el.style.background='#f3f4f6';}
+    });
+
+    // Membership: enable status radio, toggle logic for type/start
+    document.querySelectorAll('input[name="ppems"]').forEach(rb=>{rb.disabled=false;});
+    ppToggleMembership();
+
+    // PIN change: visible for admin too (they can change user PIN)
+    const pw=pp$('ppPinChangeWrap'); if(pw) pw.style.display='';
+    const pl=pp$('ppPinChangeLabel');
+    if(pl) pl.textContent='🔑 Q45 — Change ChessX IP PIN (Optional)';
+
+    // Final confirm: ADMIN PIN
+    const cl=pp$('ppConfirmPinLabel');
+    if(cl) cl.textContent='🔐 Enter Admin PIN to Confirm All Changes';
+    pp$('pe_finalPin').dataset.mode='admin';
+    pp$('pe_finalPin').placeholder='Admin PIN (6 digits)';
+  }
+}
+
+window.ppToggleEdit=()=>{
+  const es=pp$('ppEditSection');
+  if(es.style.display==='none'||es.style.display===''){
+    ppShowEdit();
+    es.style.display='block';
+    pp$('ppEditToggleBtn').querySelector('button').textContent='✖ Close Edit';
+  } else {
+    es.style.display='none';
+    pp$('ppEditToggleBtn').querySelector('button').innerHTML='✏ Edit Profile Details';
+  }
+};
+window.ppDoLogin=()=>{
+  const id=ppGv('ppLId'), pin=ppGv('ppLPin'), errEl=pp$('ppLErr');
+  errEl.style.display='none';
+  if(!id||!pin){errEl.textContent='Enter IP ID and PIN.';errEl.style.display='block';return;}
+  if(!ppRecord){return;}
+  if(id!==ppRecord.Q41_ipid||pin!==ppRecord.Q40_ippin){errEl.textContent='❌ Incorrect IP ID or PIN.';errEl.style.display='block';return;}
+  ppLoggedIn=true; ppRenderProfile(true);
+};
+
+
+function ppToggleMembership(){
+  const rb=document.querySelector('input[name="ppems"]:checked');
+  const isActive=(rb?.value==='Active');
+  const mtEl=pp$('pe_Q36_MBtype');
+  const msEl=pp$('pe_Q37_MBstartdate');
+  const meEl=pp$('pe_Q38_MBenddate');
+  if(mtEl){mtEl.disabled=!isActive; mtEl.style.background=isActive?'':'#f3f4f6'; if(!isActive)mtEl.value='';}
+  if(msEl){msEl.disabled=!isActive; msEl.style.background=isActive?'':'#f3f4f6'; if(!isActive)msEl.value='';}
+  if(meEl){meEl.value=isActive&&msEl?.value?'31/03/2027':''; meEl.style.background='#f3f4f6';}
+}
+// Auto-set end date when start date filled
+window.ppMembershipStartInput=el=>{
+  ppSlash(el);
+  if(el.value.length===10){
+    const meEl=pp$('pe_Q38_MBenddate');
+    if(meEl) meEl.value='31/03/2027';
+  }
+};
+
+function ppInitDD(type, items, cb){
+  const inp=pp$('pe_'+type), list=pp$('ppDDl_'+type);
+  list._items=items; list._cb=cb;
+  ppRenderDD(type,'');
+}
+function ppRenderDD(type,filter){
+  const list=pp$('ppDDl_'+type); if(!list) return;
+  const f=(filter||'').toLowerCase();
+  const items=(list._items||[]).filter(x=>x.toLowerCase().includes(f));
+  list.innerHTML=items.map(x=>`<div class="ppDDit" data-v="${x}">${x}</div>`).join('');
+  list.querySelectorAll('.ppDDit').forEach(d=>{d.addEventListener('mousedown',e=>{e.preventDefault();const v=d.dataset.v;pp$('pe_'+type).value=v;list._cb&&list._cb(v);list.classList.remove('open');});});
+}
+window.ppFilterDD=type=>{ppRenderDD(type,pp$('pe_'+type).value); pp$('ppDDl_'+type).classList.add('open');};
+document.addEventListener('click',e=>{if(!e.target.closest('.ppDD')){pp$('ppDDl_Q19_state')?.classList.remove('open');pp$('ppDDl_Q20_district')?.classList.remove('open');}});
+
+window.ppSave=async()=>{
+  ['Q02_fideid','Q06_Fname','Q08_Lname','Q10_dob','Q12_gender','Q13_contactno','Q14_whatsappno','Q15_emailid','Q19_state','Q20_district','Q21_city','Q22_postalcode','oldPin','newPin','conPin','finalPin']
+    .forEach(f=>{const el=pp$('pee_'+f);if(el)el.textContent='';});
+  const msg=pp$('ppMsg'); msg.style.display='none';
+  let ok=true;
+  const pe=(id,m)=>{const el=pp$('pee_'+id);if(el)el.textContent=m;ok=false;};
+  const Q02_fideid=ppGv('pe_Q02_fideid'),Q03_aicfid=ppGv('pe_Q03_aicfid'),Q04_chesscomid=ppGv('pe_Q04_chesscomid'),Q05_lichessid=ppGv('pe_Q05_lichessid');
+  const Q06_Fname=ppGv('pe_Q06_Fname'),Q07_Mname=ppGv('pe_Q07_Mname'),Q08_Lname=ppGv('pe_Q08_Lname'),Q09_fullname=ppGv('pe_Q09_fullname');
+  const Q10_dob=ppGv('pe_Q10_dob'),Q12_gender=document.querySelector('input[name="ppeg"]:checked')?.value||'';
+  const Q13_contactno=ppGv('pe_Q13_contactno'),Q14_whatsappno=ppGv('pe_Q14_whatsappno'),Q15_emailid=ppGv('pe_Q15_emailid');
+  const Q19_state=ppGv('pe_Q19_stateVal'),Q20_district=ppGv('pe_Q20_districtVal'),Q21_city=ppGv('pe_Q21_city'),Q22_postalcode=ppGv('pe_Q22_postalcode');
+  const oldPin=ppGv('pe_oldPin'),newPin=ppGv('pe_newPin'),conPin=ppGv('pe_conPin'),finalPin=ppGv('pe_finalPin');
+  if(Q02_fideid&&!/^\d+$/.test(Q02_fideid)) pe('Q02_fideid','Numeric only');
+  const nameWrap=pp$('pe_Q06_Fname')?.closest('.ppEItem');
+  const nameVisible=!nameWrap||nameWrap.style.display!=='none';
+  if(nameVisible&&!Q06_Fname) pe('Q06_Fname','Required');
+  if(nameVisible&&!Q08_Lname)  pe('Q08_Lname','Required');
+  if(!Q10_dob||Q10_dob.length!==10) pe('Q10_dob','DD/MM/YYYY required');
+  if(!Q12_gender) pe('Q12_gender','Select Q12_gender');
+  if(!Q13_contactno||Q13_contactno.length!==10) pe('Q13_contactno','Exactly 10 digits');
+  if(!Q14_whatsappno||Q14_whatsappno.length!==10) pe('Q14_whatsappno','Exactly 10 digits');
+  if(!Q15_emailid||!/\S+@\S+\.\S+/.test(Q15_emailid)) pe('Q15_emailid','Valid email required');
+  if(!Q19_state) pe('Q19_state','Select Q19_state');
+  if(!Q20_district) pe('Q20_district','Select Q20_district');
+  if(!Q21_city) pe('Q21_city','Required');
+  if(Q22_postalcode&&Q22_postalcode.length!==6) pe('Q22_postalcode','6 digits required');
+  let newIpPin=ppRecord.Q40_ippin;
+  if(oldPin||newPin||conPin){
+    if(!oldPin||oldPin.length!==6) pe('oldPin','Enter current 6-digit PIN');
+    else if(oldPin!==ppRecord.Q40_ippin) pe('oldPin','Incorrect current PIN');
+    if(!newPin||newPin.length!==6) pe('newPin','6 digits required');
+    if(!conPin||conPin!==newPin) pe('conPin','PINs do not match');
+    if(ok) newIpPin=newPin;
+  }
+  // Verify final PIN: admin mode = check admin PIN, IP mode = check IP PIN
+  const finalPinMode=pp$('pe_finalPin')?.dataset?.mode||'ip';
+  if(!finalPin||finalPin.length!==6){pe('finalPin','Enter 6-digit PIN to confirm');ok=false;}
+  else if(finalPinMode==='admin'){
+    if(!ppAdminRec||finalPin!==ppAdminRec.adminPin){pe('finalPin','Incorrect Admin PIN');ok=false;}
+  } else {
+    if(finalPin!==ppRecord.Q40_ippin){pe('finalPin','Incorrect IP PIN');ok=false;}
+  }
+  if(!ok) return;
+  const now=new Date(), pad=n=>String(n).padStart(2,'0');
+  const dateStr=`${pad(now.getDate())}/${pad(now.getMonth()+1)}/${now.getFullYear()}`;
+  const timeStr=`${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  // Collect FIDE fields (only if ppEditFideSec is visible)
+  const fideSec=pp$('ppEditFideSec');
+  const fideVisible=fideSec&&fideSec.style.display!=='none';
+  const Q23_stdrating     = fideVisible?(ppGv('pe_Q23_stdrating')||'')   : ppRecord.Q23_stdrating||'';
+  const Q24_rapidrating   = fideVisible?(ppGv('pe_Q24_rapidrating')||'') : ppRecord.Q24_rapidrating||'';
+  const Q25_blitzrating   = fideVisible?(ppGv('pe_Q25_blitzrating')||''): ppRecord.Q25_blitzrating||'';
+  const Q27_playertitle  = fideVisible?(pp$('pe_Q27_playertitle')?.value||''):ppRecord.Q27_playertitle||'';
+  const Q29_trainertitle = fideVisible?(pp$('pe_Q29_trainertitle')?.value||''):ppRecord.Q29_trainertitle||'';
+  const Q31_arbitertitle = fideVisible?(pp$('pe_Q31_arbitertitle')?.value||''):ppRecord.Q31_arbitertitle||'';
+  const Q33_foatitle         = fideVisible?(pp$('pe_Q33_foatitle')?.value||''):ppRecord.Q33_foatitle||'';
+  const Q35_MBstatus = fideVisible?(document.querySelector('input[name="ppems"]:checked')?.value||'Inactive'):ppRecord.Q35_MBstatus||'';
+  const Q36_MBtype   = fideVisible?(pp$('pe_Q36_MBtype')?.value||''):ppRecord.Q36_MBtype||'';
+  const Q37_MBstartdate  = fideVisible?(ppGv('pe_Q37_MBstartdate')||''):ppRecord.Q37_MBstartdate||'';
+  const Q38_MBenddate    = Q37_MBstartdate?'31/03/2027':(ppRecord.Q38_MBenddate||'');
+  // Derived flags
+  const Q28_titledplayer     = (Q27_playertitle?'YES':'NO');
+  const Q26_ratedplayer      = (Q23_stdrating||Q24_rapidrating||Q25_blitzrating?'YES':'NO');
+  const Q30_fidetrainer      = (Q29_trainertitle?'YES':'NO');
+  const Q32_fidearbiter      = (Q31_arbitertitle?'YES':'NO');
+  const Q34_arenatitledplayer= (Q33_foatitle?'YES':'NO');
+  // Q45_editedby: admin ID if admin mode, else 'IP'
+  const Q45_editedby = ppIsAdmin && ppAdminRec ? (ppAdminRec.adminId||'ADMIN') : 'IP';
+  // If name fields hidden (FIDE user), keep existing values
+  const finalFirstName = nameVisible ? Q06_Fname : (ppRecord.Q06_Fname||'');
+  const finalMiddleName= nameVisible ? Q07_Mname: (ppRecord.Q07_Mname||'');
+  const finalLastName  = nameVisible ? Q08_Lname  : (ppRecord.Q08_Lname||'');
+  const finalFullName  = nameVisible ? Q09_fullname  : (ppRecord.Q09_fullname||'');
+  // Auto-compute Q11_birthyear from Q10_dob (DD/MM/YYYY → last 4 chars), or manual if Q10 empty
+  const q10Empty = !Q10_dob || Q10_dob.length!==10;
+  const Q11_birthyear = (!q10Empty) ? Q10_dob.slice(-4) : (ppGv('pe_Q11_birthyear')||ppRecord.Q11_birthyear||'');
+  // Q41 IP ID: admin can change, IP user keeps existing
+  const Q41_ipid = ppIsAdmin ? (ppGv('pe_Q41_ipid')||ppRecord.Q41_ipid||'') : (ppRecord.Q41_ipid||'');
+  const updates={Q02_fideid,Q03_aicfid,Q04_chesscomid,Q05_lichessid,Q06_Fname:finalFirstName,Q07_Mname:finalMiddleName,Q08_Lname:finalLastName,Q09_fullname:finalFullName,Q10_dob,Q11_birthyear,Q12_gender,Q13_contactno,Q14_whatsappno,Q15_emailid,Q19_state,Q20_district,Q21_city,Q22_postalcode,Q40_ippin:newIpPin,Q23_stdrating,Q24_rapidrating,Q25_blitzrating,Q27_playertitle,Q29_trainertitle,Q31_arbitertitle,Q33_foatitle,Q35_MBstatus,Q36_MBtype,Q37_MBstartdate,Q38_MBenddate,Q28_titledplayer,Q26_ratedplayer,Q30_fidetrainer,Q32_fidearbiter,Q34_arenatitledplayer,Q41_ipid,Q45_editedby,Q46_dateofedit:dateStr,Q47_timeofedit:timeStr};
+  try{
+    const {doc:fd,updateDoc:ud}=await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+    await ud(fd(db,'ipdbchessX',ppDocId),updates);
+    // Also update allData in memory
+    const rec=allData.find(r=>r._docId===ppDocId);
+    if(rec){ Object.assign(rec,updates); filteredData=filteredData.map(r=>r._docId===ppDocId?rec:r); renderTable(); }
+    Object.assign(ppRecord,updates);
+    msg.textContent='✔ Profile updated successfully!'; msg.className='ppMsg ok'; msg.style.display='block';
+    // Close edit section
+    pp$('ppEditSection').style.display='none';
+    const editBtn=pp$('ppEditToggleBtn')?.querySelector('button');
+    if(editBtn) editBtn.innerHTML='✏ Edit Profile Details';
+    // If IP login: logout (re-render masked), if admin: stay logged in (re-render unmasked)
+    if(ppIsAdmin){
+      ppRenderProfile(true);
+    } else {
+      ppLoggedIn=false;
+      ppRenderProfile(false);
+    }
+  }catch(e){msg.textContent='❌ Error: '+e.message; msg.className='ppMsg err'; msg.style.display='block';}
+};
+
+window.closeProfilePopup=()=>{pp$('profilePopup').classList.remove('open');document.body.style.overflow='';};
+// Close on backdrop click
+pp$('profilePopup').addEventListener('click',e=>{if(e.target===pp$('profilePopup'))closeProfilePopup();});
+// Close on Escape key
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeProfilePopup();});
+
+window.showToast=function(msg, color=''){
+  const t=document.getElementById('toastMsg');
+  if(!t) return;
+  t.textContent=msg;
+  t.className='show'+(color?' '+color:'');
+  clearTimeout(t._timer);
+  t._timer=setTimeout(()=>{t.className='';},3000);
+};
+
+// ══════════════════════════════════════════════════════
+// ADMIN TOOL FUNCTIONS — all exposed to window
+// ══════════════════════════════════════════════════════
+
+window.copyToClip = function(text){
+  if(navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(text)
+      .then(()=>window.showToast('✅ Copied: '+text,'green'))
+      .catch(()=>_fallbackCopy(text));
+  } else { _fallbackCopy(text); }
+};
+function _fallbackCopy(text){
+  const ta=document.createElement('textarea');
+  ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.focus(); ta.select();
+  try{ document.execCommand('copy'); window.showToast('✅ Copied!','green'); }
+  catch(e){ window.showToast('❌ Copy failed','red'); }
+  document.body.removeChild(ta);
+}
+
+window.copyIpIdPage = function(){
+  const start=(currentPage-1)*PAGE_SIZE;
+  const page=filteredData.slice(start, start+PAGE_SIZE);
+  const ids=page.map(r=>r.Q41_ipid||'').filter(Boolean).join('\n');
+  if(!ids){ window.showToast('No IP IDs on this page','red'); return; }
+  window.copyToClip(ids);
+};
+
+window.copyIpIdAll = function(){
+  const ids=filteredData.map(r=>r.Q41_ipid||'').filter(Boolean).join('\n');
+  if(!ids){ window.showToast('No IP IDs found','red'); return; }
+  window.copyToClip(ids);
+};
+
+window.downloadJSON = function(){
+  if(!allData.length){ window.showToast('No data to download','red'); return; }
+  const FIELDS=['Q01_hasfideid','Q02_fideid','Q03_aicfid','Q04_chesscomid','Q05_lichessid',
+    'Q06_Fname','Q07_Mname','Q08_Lname','Q09_fullname','Q10_dob','Q11_birthyear','Q12_gender',
+    'Q13_contactno','Q14_whatsappno','Q15_emailid','Q16_country','Q17_countrycode','Q18_timezone',
+    'Q19_state','Q20_district','Q21_city','Q22_postalcode','Q23_stdrating','Q24_rapidrating','Q25_blitzrating',
+    'Q27_playertitle','Q29_trainertitle','Q31_arbitertitle','Q33_foatitle',
+    'Q35_MBstatus','Q36_MBtype','Q37_MBstartdate','Q38_MBenddate',
+    'Q28_titledplayer','Q26_ratedplayer','Q30_fidetrainer','Q32_fidearbiter','Q34_arenatitledplayer',
+    'Q42_enteredby','Q43_dateofentry','Q44_timeofentry','Q45_editedby','Q46_dateofedit','Q47_timeofedit',
+    'Q40_ippin','Q41_ipid','Q39_profile'];
+  const out=allData.map(r=>{
+    const obj={};
+    FIELDS.forEach(f=>{ if(r[f]!==undefined) obj[f]=r[f]; });
+    return obj;
+  });
+  const blob=new Blob([JSON.stringify(out,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='ChessX_IPDatabase_'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+  window.showToast('✅ JSON downloaded ('+allData.length+' records)','green');
+};
+
+window.downloadExcel = function(){
+  if(!allData.length){ window.showToast('No data to download','red'); return; }
+  const HEADERS=['Q1-Has FIDE ID','Q2-FIDE ID','Q3-AICF ID','Q4-Chess.com ID','Q5-Lichess ID',
+    'Q6-First Name','Q7-Middle Name','Q8-Last Name','Q9-Full Name','Q10-Date of Birth',
+    'Q11-Birth Year','Q12-Gender','Q13-Contact No','Q14-WhatsApp No','Q15-Email ID',
+    'Q16-Country','Q17-Country Code','Q18-Time Zone','Q19-State','Q20-District',
+    'Q21-City','Q22-PIN Code','Q23-Standard Rating','Q24-Rapid Rating','Q25-Blitz Rating',
+    'Q26-FIDE Player Title','Q27-FIDE Trainer Title','Q28-FIDE Arbiter Title','Q29-FOA Arena Title',
+    'Q30-Membership Status','Q31-Membership Type','Q32-Membership Start','Q33-Membership End',
+    'Q34-Titled Player','Q35-Rated Player','Q36-FIDE Trainer','Q37-FIDE Arbiter',
+    'Q38-Arena Titled Player','Q39-Entered By','Q40-Date of Entry','Q41-Time of Entry',
+    'Q42-Edited By','Q43-Date of Edit','Q44-Time of Edit','Q45-ChessX IP PIN',
+    'Q46-ChessX IP ID','Q47-Profile Photo URL'];
+  const FIELDS=['Q01_hasfideid','Q02_fideid','Q03_aicfid','Q04_chesscomid','Q05_lichessid',
+    'Q06_Fname','Q07_Mname','Q08_Lname','Q09_fullname','Q10_dob','Q11_birthyear','Q12_gender',
+    'Q13_contactno','Q14_whatsappno','Q15_emailid','Q16_country','Q17_countrycode','Q18_timezone',
+    'Q19_state','Q20_district','Q21_city','Q22_postalcode','Q23_stdrating','Q24_rapidrating','Q25_blitzrating',
+    'Q27_playertitle','Q29_trainertitle','Q31_arbitertitle','Q33_foatitle',
+    'Q35_MBstatus','Q36_MBtype','Q37_MBstartdate','Q38_MBenddate',
+    'Q28_titledplayer','Q26_ratedplayer','Q30_fidetrainer','Q32_fidearbiter','Q34_arenatitledplayer',
+    'Q42_enteredby','Q43_dateofentry','Q44_timeofentry','Q45_editedby','Q46_dateofedit','Q47_timeofedit',
+    'Q40_ippin','Q41_ipid','Q39_profile'];
+  const esc=v=>{ const s=String(v===undefined||v===null?'':v);
+    return (s.includes(',')||s.includes('"')||s.includes('\n'))?'"'+s.replace(/"/g,'""')+'"':s; };
+  const rows=[HEADERS.map(esc).join(',')];
+  allData.forEach(r=>rows.push(FIELDS.map(f=>esc(r[f]||'')).join(',')));
+  const csv=rows.join('\r\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='ChessX_IPDatabase_'+new Date().toISOString().slice(0,10)+'.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+  window.showToast('✅ Excel CSV downloaded ('+allData.length+' records)','green');
+};
+
+window.setView = function(mode){
+  document.body.classList.remove('forceDesktop','forceMobile');
+  ['vAuto','vDesktop','vMobile'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.classList.remove('active');
+  });
+  if(mode==='desktop'){ document.body.classList.add('forceDesktop'); document.getElementById('vDesktop')?.classList.add('active'); }
+  else if(mode==='mobile'){ document.body.classList.add('forceMobile'); document.getElementById('vMobile')?.classList.add('active'); }
+  else { document.getElementById('vAuto')?.classList.add('active'); }
+};
+
+// ── KEYBOARD NAVIGATION ──────────────────────────────
+document.addEventListener('keydown', e=>{
+  const active=document.activeElement;
+  // Enter on button = click
+  if(e.key==='Enter' && active?.tagName==='BUTTON'){ e.preventDefault(); active.click(); return; }
+  // Enter on checkbox/radio = toggle
+  if(e.key==='Enter' && (active?.type==='checkbox'||active?.type==='radio')){ e.preventDefault(); active.click(); return; }
+  // ArrowRight on password/number input = submit nearest form button (login)
+  if(e.key==='ArrowRight' && active?.type==='password'){
+    e.preventDefault();
+    const form=active.closest('.ppLogin,.ppCPin,.loginBanner,.modal-card');
+    if(form){
+      const btn=form.querySelector('button.ppBtnVfy,button.ppSave,button.btn-primary,button.btnVerify');
+      if(btn) btn.click();
+    }
+    return;
+  }
+  // Escape = close popups
+  if(e.key==='Escape'){
+    if(document.getElementById('profilePopup')?.classList.contains('open')){ closeProfilePopup(); return; }
+    if(document.getElementById('adminModal')?.classList.contains('open')){ window.closeAdminModal(); return; }
+    if(document.getElementById('deleteModal')?.classList.contains('open')){ window.closeDeleteModal(); return; }
+  }
+});
+
+// Smooth scroll into view for focused elements in popup
+document.addEventListener('focusin', e=>{
+  const popup=document.getElementById('profilePopup');
+  if(popup?.classList.contains('open') && e.target?.tagName==='INPUT'){
+    setTimeout(()=>e.target.scrollIntoView({block:'nearest',behavior:'smooth'}),100);
+  }
+});
+
+// ══════════════════════════════════════════════════════════
+// PHOTO FUNCTIONS
+// ══════════════════════════════════════════════════════════
+
+let ppPhotoBase64 = null;
+
+// Click on photo box: if has photo → show big preview | else open upload if logged in
+window.ppPhotoClick = function(){
+  const r = ppRecord;
+  if(r && r.Q39_profile){
+    const modal = document.getElementById('photoPreviewModal');
+    const img   = document.getElementById('photoPreviewImg');
+    if(modal && img){ img.src = r.Q39_profile; modal.classList.add('open'); }
+  }
+  // + button handles upload separately - photo box click only for preview
+};
+
+// Show big photo in table column
+window.showBigPhoto = function(src){
+  const modal = document.getElementById('photoPreviewModal');
+  const img   = document.getElementById('photoPreviewImg');
+  if(!modal || !img) return;
+  img.src = src;
+  modal.classList.add('open');
+};
+document.getElementById('photoPreviewModal')?.addEventListener('click', function(){
+  this.classList.remove('open');
+});
+
+// Open upload panel - always open, never toggle-close
+window.ppOpenUpload = function(){
+  if(!ppLoggedIn && !ppIsAdmin){
+    window.showToast('Please login first','red'); return;
+  }
+  const panel = pp$('ppUploadPanel');
+  if(!panel) return;
+  panel.classList.add('open');
+  setTimeout(()=>panel.scrollIntoView({behavior:'smooth',block:'nearest'}), 50);
+};
+
+// Handle file selection
+window.ppHandleFile = function(file){
+  if(!file) return;
+  const allowed = ['image/jpeg','image/png','image/jpg'];
+  const msg = pp$('ppUploadMsg');
+  if(!allowed.includes(file.type)){
+    msg.textContent = '❌ Only JPG, JPEG, PNG files allowed.';
+    msg.className = 'ppUploadMsg err'; msg.style.display = 'block'; return;
+  }
+  msg.style.display = 'none';
+  // Compress to ~30KB using canvas
+  const reader = new FileReader();
+  reader.onload = function(e){
+    const img = new Image();
+    img.onload = function(){
+      // Start with quality 0.8, reduce until size ≤ 30KB
+      let quality = 0.85;
+      let base64 = '';
+      const canvas = document.createElement('canvas');
+      // Max dimension 400px
+      let w = img.width, h = img.height;
+      const maxDim = 400;
+      if(w > maxDim || h > maxDim){
+        if(w > h){ h = Math.round(h * maxDim / w); w = maxDim; }
+        else      { w = Math.round(w * maxDim / h); h = maxDim; }
+      }
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      // Reduce quality until ~30KB
+      do {
+        base64 = canvas.toDataURL('image/jpeg', quality);
+        quality -= 0.05;
+      } while(base64.length > 40000 && quality > 0.1);
+
+      ppPhotoBase64 = base64;
+          // Show preview
+      const thumb   = pp$('ppUploadThumb');
+      const sizeEl  = pp$('ppUploadSize');
+      const preview = pp$('ppUploadPreview');
+      const actions = pp$('ppUploadActions');
+      const msgEl   = pp$('ppUploadMsg');
+      if(thumb)   thumb.src = base64;
+      const sizeKB = Math.round(base64.length * 0.75 / 1024);
+      if(sizeEl)  sizeEl.textContent = '✅ Compressed to ~' + sizeKB + ' KB';
+      if(preview) preview.style.display = 'block';
+      if(actions) actions.style.display = 'flex';
+      if(msgEl)   msgEl.style.display = 'none';
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+};
+
+// Upload photo — save base64 to Firestore Q39_profile field
+window.ppUploadPhoto = async function(){
+  if(!ppPhotoBase64 || !ppDocId){ window.showToast('No photo selected','red'); return; }
+  const msg = pp$('ppUploadMsg');
+  msg.textContent = '⏳ Uploading...'; msg.className = 'ppUploadMsg'; msg.style.display = 'block';
+  try{
+    const {doc:fd, updateDoc:ud} = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+    const now = new Date(), pad = n => String(n).padStart(2,'0');
+    const Q45_editedby  = ppIsAdmin && ppAdminRec ? (ppAdminRec.adminId||'ADMIN') : 'IP';
+    const Q46_dateofedit= `${pad(now.getDate())}/${pad(now.getMonth()+1)}/${now.getFullYear()}`;
+    const Q47_timeofedit= `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    await ud(fd(db,'ipdbchessX', ppDocId), { Q39_profile: ppPhotoBase64, Q45_editedby, Q46_dateofedit, Q47_timeofedit });
+    // Update local record
+    ppRecord.Q39_profile = ppPhotoBase64;
+    const rec = allData.find(r => r._docId === ppDocId);
+    if(rec){ rec.Q39_profile = ppPhotoBase64; rec.Q45_editedby = Q45_editedby; rec.Q46_dateofedit = Q46_dateofedit; rec.Q47_timeofedit = Q47_timeofedit; }
+    // Update photo in hero immediately
+    const photoEl = pp$('ppPhoto');
+    if(photoEl) photoEl.innerHTML = `<img src="${ppPhotoBase64}" style="width:100%;height:100%;object-fit:cover;border-radius:9px;"/>`;
+    // Update table row photo
+    renderTable();
+    msg.textContent = '✅ Photo uploaded successfully!';
+    msg.className = 'ppUploadMsg ok'; msg.style.display = 'block';
+    setTimeout(()=>{ ppCancelUpload(); pp$('ppUploadPanel')?.classList.remove('open'); }, 1500);
+    window.showToast('✅ Profile photo updated successfully','green');
+    setTimeout(()=>{ ppCancelUpload(); }, 1200);
+  }catch(e){
+    msg.textContent = '❌ Error: ' + e.message;
+    msg.className = 'ppUploadMsg err'; msg.style.display = 'block';
+  }
+};
+
+// Cancel upload - reset all Q19_state and close panel
+window.ppCancelUpload = function(){
+  ppPhotoBase64 = null;
+  const preview   = pp$('ppUploadPreview');
+  const actions   = pp$('ppUploadActions');
+  const msg       = pp$('ppUploadMsg');
+  const panel     = pp$('ppUploadPanel');
+  const fileInput = document.getElementById('ppFileInput');
+  if(preview)   preview.style.display = 'none';
+  if(actions)   actions.style.display = 'none';
+  if(msg)     { msg.style.display = 'none'; msg.textContent = ''; }
+  if(panel)     panel.classList.remove('open');
+  if(fileInput) fileInput.value = '';
+};
+
+</script>
+<div id="photoPreviewModal" onclick="this.classList.remove('open')">
+  <img id="photoPreviewImg" src="" alt="Profile Photo"/>
+</div>
+<div id="toastMsg"></div>
+</body>
+</html>
